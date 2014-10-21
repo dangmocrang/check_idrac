@@ -2,7 +2,7 @@
 __author__ = 'Nguyen Duc Trung Dung'
 __contact__ = 'ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com'
 __blog__ = 'ndtdung.blogspot.com'
-__version__ = '2.0'
+__version__ = '2.0b3'
 __license__ = 'GPL'
 
 import commands
