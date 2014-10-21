@@ -1,7 +1,11 @@
 Check_iDRAC
-Version 2.0b2
+Version 2.0b3
 
 Change log:
+2.0b3:
+- Lower iDRAC 7 firmware version (below 1.57.57) not export enough SNMP information for check to work. So I added feature to detect what is
+missing and fill it with phase "n/a".
+
 2.0b2:
 - Improve speed.
 - Use "snmpget" instead of "snmpwalk" which may cause SNMP time-out when multi check instances run. Scan mode still using "snmpwalk".
