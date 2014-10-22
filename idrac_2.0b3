@@ -283,7 +283,7 @@ def option_reader():
 
 
 #----------------------CONFIG READER----------------------#
-# This funciton read snmp and state alert definition in config file  and also do last check of alert threshold.
+# This funciton read snmp and state alert definition in config file and also do last check of alert threshold.
 def config_check(cfg_path, no_alert):
     try:
         cfg_f = open(cfg_path, 'r')
@@ -405,7 +405,6 @@ class PARSER:
         self.snmp_type = ''
 
     def get_snmp(self, oids):
-
         v3_cmd = '%s %s -O q -v %s -u %s -l %s -a %s -A %s -x %s -X %s %s -m %s'\
                  % (self.snmp_type, self.host, conf['snmp_version'], conf['snmp_v3_user'],
                     conf['snmp_v3_security_level'],
@@ -664,14 +663,14 @@ class PARSER:
             value_on_alert = [3, 7]  # raise alert on these value. Mapped with all_hardware as list order. int type for status check, string type for range check
             if self.no_alert is None:
                 hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
-            tmp = '%s %s (%s) %.2f GB: %s, PowerStat: %s, HotSpare: %s [%s, S/N: %s]'
+            tmp = '%s %s (%s) %s GB: %s, PowerStat: %s, HotSpare: %s [%s, S/N: %s]'
             for hw in hw_dict.values():
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if hw[5] == '(N/A)':
                     hw_5 = hw[5]
-                else: hw_5 = float(hw[5])/1024
+                else: hw_5 = round(float(hw[5])/1024, 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[1].split()[-1].replace('"', ''), hw_5, hw[3], hw[7], hw[6].replace('HotSpare', '').replace('notASpare', 'no'), hw[2].replace('"', ''), hw[4].replace('"', '')))
         elif self.hardware[2] == 'Fan':
             value_on_alert = [1, 2, '3']
@@ -693,7 +692,7 @@ class PARSER:
                 hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
                 tmp = '%s: %s C %s/%s%s'
             else:
-                tmp = '%s: %.1f C %s/%s%s'
+                tmp = '%s: %s C %s/%s%s'
             for hw in hw_dict.values():
                 for v in value_on_alert:
                     v = int(v)
@@ -707,7 +706,7 @@ class PARSER:
                 else:
                     if hw[3] == '(N/A)':
                         hw_3 = hw[3]
-                    else: hw_3 = float(hw[3])/10
+                    else: hw_3 = round(float(hw[3])/10, 1)
                     output.append(tmp % (hw[4].replace('"', ''), hw_3, hw[1], hw[2], perf_data))
         elif self.hardware[2] == 'CPU':
             value_on_alert = [1, 2]
@@ -749,7 +748,7 @@ class PARSER:
                 if self.perf is True:
                     if hw[4] == '(N/A)':
                         hw_4 = hw[4]
-                    else: hw_4 = float(hw[4])/10
+                    else: hw_4 = round(float(hw[4])/10, 0)
                     perf_data = ' | VoltINPUT=%sV;;;; VoltOUTPUT=%sV;;;; Current=%sA;;;; WattINPUT=%sW;;;; WattOUTPUT=%sW;;;;' %(hw[3], hw[6].split('(')[0], hw[5].split('(')[0], hw_4, hw[2].split('(')[0])
                 else:
                     perf_data = ''
@@ -777,14 +776,14 @@ class PARSER:
             if self.no_alert is None:
                 hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
             #--debug print hw_dict
-            tmp = '%s %s (%s) %.2f GB/%s MHz: %s/%s [%s, %s, S/N: %s]'
+            tmp = '%s %s (%s) %s GB/%s MHz: %s/%s [%s, %s, S/N: %s]'
             for hw in hw_dict.values():
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if hw[5] == '(N/A)':
                     hw_5 = hw[5]
-                else: hw_5 = float(hw[5].split()[-1])/(1024*1024)
+                else: hw_5 = round(float(hw[5].split()[-1])/(1024*1024), 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[4].replace('.', ' ').replace('"', ''), hw_5, hw[6].split()[-1], hw[1], hw[2], hw[3].replace('deviceTypeIs', ''), hw[7].replace('"', ''), hw[8].replace('"', ''),))
         elif self.hardware[2] == 'Battery':
             value_on_alert = [1, 2, 3]
@@ -800,14 +799,14 @@ class PARSER:
             value_on_alert = [2, 5, '6']
             if self.no_alert is None:
                 hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
-            tmp = '%s %s (%s): %s/%s, %s (%.2f GB), BadBlock: %s [%s]'
+            tmp = '%s %s (%s): %s/%s, %s (%s GB), BadBlock: %s [%s]'
             for hw in hw_dict.values():
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if hw[3] == '(N/A)':
                     hw_3 = hw[3]
-                else: hw_3 = float(hw[3])/1024
+                else: hw_3 = round(float(hw[3])/1024, 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[1].replace('"', ''), hw[5], hw[2], hw[4].replace('r', 'RAID-'), hw_3, hw[6], hw[7].replace('"', '')))
         return output, exit_code
 
