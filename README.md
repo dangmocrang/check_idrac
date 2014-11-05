@@ -1,7 +1,10 @@
 Check_iDRAC
-Version 2.0b3
+Version 2.0b4
 
 Change log:
+2.0b4:
+- Change "is False" instead of "is None"
+
 2.0b3:
 - Dump "(n/a)" to missing OID to avoid script crash. 
 - Fix bug "required config file" when check Hardware group. 
