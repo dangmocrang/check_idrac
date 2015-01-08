@@ -2,6 +2,10 @@ Check_iDRAC
 Version 2.0b4
 
 Change log:
+
+2.0b5:
+- Add code at line 876: hw_no_alert = config_check(hw_cfg, hw_no_alert) to allow check all HW at once when use config file.
+
 2.0b4:
 - Change "is False" instead of "is None"
 
