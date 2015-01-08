@@ -873,6 +873,7 @@ if __name__ == '__main__':
     #START CHECKING
     #--debug print check_all
     if check_all is True:  # check all hw
+        hw_no_alert = config_check(hw_cfg, hw_no_alert)
         for hw_name in all_hardware.keys():
             hw_info = all_hardware[hw_name]
             result, tmp_code = PARSER(host, hw_info, hw_order, hw_no_alert, hw_mib, perf).main()
