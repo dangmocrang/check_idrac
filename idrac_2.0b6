@@ -288,8 +288,11 @@ def config_check(cfg_path, no_alert):
     try:
         cfg_f = open(cfg_path, 'r')
     except Exception, error:
-        print error
-        sys.exit(1)
+        if conf['snmp_version'] == '2c' and no_alert is True:
+            pass
+        else:
+            print error
+            sys.exit(1)
     else:
         cfg_parameters = cfg_f.read().split('\n')
         cfg_f.close()
