@@ -2,7 +2,7 @@
 __author__ = 'Nguyen Duc Trung Dung'
 __contact__ = 'ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com'
 __blog__ = 'dybn.blogspot.com'
-__version__ = '2.0b6'
+__version__ = '2.0b7'
 __license__ = 'GPL'
 
 import commands
@@ -222,16 +222,16 @@ def option_reader():
                     try:
                         conf['fan_min_warn'] = int(opts.fan_alert.split(',')[0])
                         conf['fan_min_crit'] = int(opts.fan_alert.split(',')[1])
-                    except KeyError:
-                        print 'Missing FAN ALERT threshold.'
+                    except Exception:
+                        print 'Error parsing threshold.'
                         sys.exit(1)
             elif re.search(r'VDISK', opts.hardware, re.IGNORECASE):
                 if opts.vdiskbad:
                     try:
                         conf['vdisk_bad_warn'] = int(opts.vdiskbad.split(',')[0])
                         conf['vdisk_bad_crit'] = int(opts.vdiskbad.split(',')[1])
-                    except KeyError:
-                        print 'Missing VDISK ALERT threshold.'
+                    except Exception:
+                        print 'Error parsing threshold.'
                         sys.exit(1)
             elif re.search(r'SENSOR', opts.hardware, re.IGNORECASE):
                 if opts.temp_warn or opts.temp_crit:
@@ -240,8 +240,8 @@ def option_reader():
                         conf['sensor_temp_max_warn'] = float(opts.temp_warn.split(',')[1])
                         conf['sensor_temp_min_crit'] = float(opts.temp_crit.split(',')[0])
                         conf['sensor_temp_max_crit'] = float(opts.temp_crit.split(',')[1])
-                    except KeyError:
-                        print 'Missing TEMP ALERT threshold.'
+                    except Exception:
+                        print 'Error parsing threshold.'
                         sys.exit(1)
             elif re.search(r'PS', opts.hardware, re.IGNORECASE):
                 if opts.volt_warn or opts.volt_crit:
@@ -250,8 +250,8 @@ def option_reader():
                         conf['ps_vol_max_warn'] = float(opts.volt_warn.split(',')[1])
                         conf['ps_vol_min_crit'] = float(opts.volt_crit.split(',')[0])
                         conf['ps_vol_max_crit'] = float(opts.volt_crit.split(',')[1])
-                    except KeyError:
-                        print 'Missing VOLT ALERT threshold.'
+                    except Exception:
+                        print 'Error parsing threshold.'
                         sys.exit(1)
                 if opts.cur_warn or opts.cur_crit:
                     try:
@@ -259,8 +259,8 @@ def option_reader():
                         conf['ps_cur_max_warn'] = float(opts.cur_warn.split(',')[1])
                         conf['ps_cur_min_crit'] = float(opts.cur_crit.split(',')[0])
                         conf['ps_cur_max_crit'] = float(opts.cur_crit.split(',')[1])
-                    except KeyError:
-                        print 'Missing CURRENT ALERT threshold.'
+                    except Exception:
+                        print 'Error parsing threshold.'
                         sys.exit(1)
                 if opts.wat_warn or opts.wat_crit:
                     try:
@@ -268,16 +268,16 @@ def option_reader():
                         conf['ps_watt_max_warn'] = float(opts.wat_warn.split(',')[1])
                         conf['ps_watt_min_crit'] = float(opts.wat_crit.split(',')[0])
                         conf['ps_watt_max_crit'] = float(opts.wat_crit.split(',')[1])
-                    except KeyError:
-                        print 'Missing WATT ALERT threshold.'
+                    except Exception:
+                        print 'Error parsing threshold.'
                         sys.exit(1)
             elif re.search(r'PU', opts.hardware, re.IGNORECASE):
                 if opts.consume:
                     try:
                         conf['pwr_consume_warn'] = float(opts.consume.split(',')[0])
                         conf['pwr_consume_crit'] = float(opts.consume.split(',')[1])
-                    except KeyError:
-                        print 'Missing PWR ALERT threshold.'
+                    except Exception:
+                        print 'Error parsing threshold.'
                         sys.exit(1)
         return check_all, opts.host, opts.hardware, opts.mib, opts.no_alert, opts.cfg, opts.perf
 
@@ -543,30 +543,30 @@ class PARSER:
                     elif self.hardware[2] == 'PS':
                         if stat_t == 6:
                             tmp[key][stat_t] = float(tmp[key][stat_t])/1000
-                            if conf['ps_vol_max_crit'] >= tmp[key][stat_t] <= conf['ps_vol_min_crit']:
+                            if tmp[key][stat_t] >= conf['ps_vol_max_crit'] or tmp[key][stat_t] <= conf['ps_vol_min_crit']:
                                 tmp[key][stat_t] = '%.0f(!!)' %tmp[key][stat_t]
                                 alert = 2
-                            elif conf['ps_vol_max_warn'] >= tmp[key][stat_t] <= conf['ps_vol_min_warn']:
+                            elif tmp[key][stat_t] >= conf['ps_vol_max_warn'] or tmp[key][stat_t] <= conf['ps_vol_min_warn']:
                                 tmp[key][stat_t] = '%.0f(!)' %tmp[key][stat_t]
                                 if alert != 2:
                                     alert = 1
                             else: tmp[key][stat_t] = '%.0f' %tmp[key][stat_t]
                         elif stat_t == 5:
                             tmp[key][stat_t] = float(tmp[key][stat_t])/10
-                            if conf['ps_cur_max_crit'] >= tmp[key][stat_t] <= conf['ps_cur_min_crit']:
+                            if tmp[key][stat_t] >= conf['ps_cur_max_crit'] or tmp[key][stat_t] <= conf['ps_cur_min_crit']:
                                 tmp[key][stat_t] = '%.1f(!!)' %tmp[key][stat_t]
                                 alert = 2
-                            elif conf['ps_cur_max_warn'] >= tmp[key][stat_t] <= conf['ps_cur_min_warn']:
+                            elif tmp[key][stat_t] >= conf['ps_cur_max_warn'] or tmp[key][stat_t] <= conf['ps_cur_min_warn']:
                                 tmp[key][stat_t] = '%.1f(!)' %tmp[key][stat_t]
                                 if alert != 2:
                                     alert = 1
                             else: tmp[key][stat_t] = '%.1f' %tmp[key][stat_t]
                         elif stat_t == 2:
                             tmp[key][stat_t] = float(tmp[key][stat_t])/10
-                            if conf['ps_watt_max_crit'] >= tmp[key][stat_t] <= conf['ps_watt_min_crit']:
+                            if tmp[key][stat_t] >= conf['ps_watt_max_crit'] or tmp[key][stat_t] <= conf['ps_watt_min_crit']:
                                 tmp[key][stat_t] = '%.0f(!!)' %tmp[key][stat_t]
                                 alert = 2
-                            elif conf['ps_watt_max_warn'] >= tmp[key][stat_t] <= conf['ps_watt_min_warn']:
+                            elif tmp[key][stat_t] >= conf['ps_watt_max_warn'] or tmp[key][stat_t] <= conf['ps_watt_min_warn']:
                                 tmp[key][stat_t] = '%.0f(!)' %tmp[key][stat_t]
                                 if alert != 2:
                                     alert = 1
@@ -581,10 +581,10 @@ class PARSER:
                                 alert = 1
                     elif self.hardware[2] == 'Sensor':
                         tmp[key][stat_t] = float(tmp[key][stat_t])/10
-                        if type(conf['sensor_temp_min_warn']) == int\
-                            or type(conf['sensor_temp_max_warn']) == int\
-                            or type(conf['sensor_temp_min_crit']) == int\
-                            or type(conf['sensor_temp_max_crit']) == int:
+                        if type(conf['sensor_temp_min_warn']) != list\
+                            or type(conf['sensor_temp_max_warn']) != list\
+                            or type(conf['sensor_temp_min_crit']) != list\
+                            or type(conf['sensor_temp_max_crit']) != list:
                             min_warn = conf['sensor_temp_min_warn']
                             max_warn = conf['sensor_temp_max_warn']
                             min_crit = conf['sensor_temp_min_crit']
@@ -606,10 +606,10 @@ class PARSER:
                                 min_crit = conf['sensor_temp_min_crit'][cpu_number+1]
                                 max_warn = conf['sensor_temp_max_warn'][cpu_number+1]
                                 min_warn = conf['sensor_temp_min_warn'][cpu_number+1]
-                        if max_crit >= tmp[key][stat_t] <= min_crit:
+                        if tmp[key][stat_t] >= max_crit or tmp[key][stat_t] <= min_crit:
                             tmp[key][stat_t] = '%.1f(!!)' %tmp[key][stat_t]
                             alert = 2
-                        elif max_warn >= tmp[key][stat_t] <= min_warn:
+                        elif tmp[key][stat_t] >= max_warn or tmp[key][stat_t] <= min_warn:
                             tmp[key][stat_t] = '%.1f(!)' %tmp[key][stat_t]
                             if alert != 2: alert = 1
                         else: tmp[key][stat_t] = '%.1f' %tmp[key][stat_t]
