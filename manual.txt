@@ -1,8 +1,8 @@
-Check_iDRAC version 2
+Check_iDRAC version 2.0
 Nguyen Duc Trung Dung
 ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com
-ndtdung.blogspot.com
-NOC leader/R&D specialist at SwissPostSolution VietNam
+dybn.blogspot.com
+NOC leader/R&D/Application specialist at SwissPostSolution VietNam
 -------------------------------------------------------
 
 How it works?
