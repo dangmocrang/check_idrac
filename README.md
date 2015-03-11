@@ -1,7 +1,10 @@
 Check_iDRAC
-Version 2.0b6
+Version 2.0b7
 
 Change log:
+2.0b7
+- Fix critical error in comparison alert value.
+- Fix error while parsing Sensor threshold.
 
 2.0b6:
 - Fix error when using SNMPv2 for checking all hw.
