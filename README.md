@@ -1,6 +1,19 @@
 Check_iDRAC
 Version 2.0b7
 
+This check monitor idrac 7 hardware status via SNMP:
+- Virtual Disk
+- Physical Disk
+- Memory
+- CPU
+- Power Supply
+- Power Unit
+- Fan
+- Battery
+- Temperature Sensor
+
+This script query SNMP directly to IDRAC device, not via any openmanage suit.
+
 Change log:
 2.0b7
 - Fix critical error in comparison alert value.
