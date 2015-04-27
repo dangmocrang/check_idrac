@@ -13,6 +13,13 @@ This check monitor idrac 7 hardware status via SNMP:
 - Temperature Sensor
 
 This script query SNMP directly to IDRAC device, not via any openmanage suit.
+Example:
+./idrac_2.0b7 -H 10.10.10.1 -f check_idrac.conf -w sensor
+System Board Inlet Temp: 20.0 C ENABLED/OK
+System Board Exhaust Temp: 30.0 C ENABLED/OK
+CPU1 Temp: 40.0 C ENABLED/OK
+CPU2 Temp: 41.0 C ENABLED/OK
+
 
 Change log:
 2.0b7
