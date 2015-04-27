@@ -27,6 +27,8 @@ CPU1 Temp: 40.0 C ENABLED/OK
 CPU2 Temp: 41.0 C ENABLED/OK
 
 
+-----------------------------------------------------------------------------------------
+
 Change log:
 2.0b7
 - Fix critical error in comparison alert value.
