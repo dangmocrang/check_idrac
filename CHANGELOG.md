@@ -1,40 +1,41 @@
 # Change Log
 
 ## [2.0b7]
-
-###Fixed bugs:
+### Fixed bugs:
 - Fix critical error in comparison alert value.
 - Fix error while parsing Sensor threshold.
 
 ## [2.0b6]
-
+### Fixed bugs:
 - Fix error when using SNMPv2 for checking all hw.
 
 ## [2.0b5]
-
+### Fixed bugs:
 - Add code at line 876: hw_no_alert = config_check(hw_cfg, hw_no_alert) to allow check all HW at once when use config file.
 
 ## [2.0b4]
-
+### Change code:
 - Change "is False" instead of "is None"
 
 ## [2.0b3]
-
+### Change code:
 - Dump "(n/a)" to missing OID to avoid script crash. 
+
+### Fixed bugs:
 - Fix bug "required config file" when check Hardware group. 
 
 ## [2.0b2]
-
+### Change codes:
 - Improve speed.
 - Use "snmpget" instead of "snmpwalk" which may cause SNMP time-out when multi check instances run. Scan mode still using "snmpwalk".
 - Remove cached mode.
 
 ## [2.0b1]
-
-Bugs:
+### Fixed bugs:
 - Fix critical bug in cached mode which may lead to hosts just read from one host's cache file.
 - Fix "-C" error when use SNMPv2.
-Options:
+
+### Change codes:
 - Allow input COMMUNITY STRING in command option but SNMPv3 still read from configuration file (for security purpose). When input COMMUNITY, script assumes you chose SNMPv2c.
 SNMP:
 - Only SNMPv2c and v3 accepted.
