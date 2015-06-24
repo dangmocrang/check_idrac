@@ -1,4 +1,4 @@
-= Check_iDRAC =
+# Check_iDRAC
 Version 2.0b8
 
 This check monitor idrac 7 hardware status via SNMP:
@@ -14,7 +14,7 @@ This check monitor idrac 7 hardware status via SNMP:
 
 This script query SNMP directly to IDRAC device, not via any openmanage suit.
 
-== Example 1 ==
+## Example 1
 
 ./idrac_2.0b8 -H 10.10.10.1 -f check_idrac.conf -w sensor
 
@@ -30,7 +30,7 @@ CPU2 Temp: 41.0 C ENABLED/OK.
 
 
 
-== Example 2 ==
+## Example 2
 
 ./idrac_2.0b8 -H 10.10.10.1 -f check_idrac.conf -w sensor#1
 
