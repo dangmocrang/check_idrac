@@ -1,5 +1,5 @@
 Check_iDRAC
-Version 2.0b7
+Version 2.0b8
 
 This check monitor idrac 7 hardware status via SNMP:
 - Virtual Disk
