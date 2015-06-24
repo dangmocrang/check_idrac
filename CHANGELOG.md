@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.0b8]
+### Fixed bug:
+- Remove duplicate snmp data when checking "PS"
+
 ## [2.0b7]
 ### Fixed bugs:
 - Fix critical error in comparison alert value.
