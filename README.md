@@ -16,7 +16,7 @@ This script query SNMP directly to IDRAC device, not via any openmanage suit.
 
 Example:
 
-./idrac_2.0b7 -H 10.10.10.1 -f check_idrac.conf -w sensor
+./idrac_2.0b8 -H 10.10.10.1 -f check_idrac.conf -w sensor
 
 System Board Inlet Temp: 20.0 C ENABLED/OK
 
