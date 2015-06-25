@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.0b9]
+### Fixed bug:
+- Fix mistake when edit code in 2.0b8
+
 ## [2.0b8]
 ### Fixed bug:
 - Remove duplicate snmp data when checking "PS"
