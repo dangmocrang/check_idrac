@@ -645,6 +645,9 @@ class PARSER:
                     for oid in self.hardware[1]:
                         oids = oid
                         snmp_data = snmp_data + self.get_snmp(oids)
+                    unique = []
+                    [unique.append(x) for x in snmp_data if x not in unique]
+                    snmp_data = unique
                 elif self.hardware[2] == 'PU':
                     oids = ' '.join(oids.split()[:-2])
                     snmp_data = self.get_snmp(oids)
@@ -652,9 +655,6 @@ class PARSER:
                     for oid in self.hardware[1]:
                         oids = oid
                         snmp_data = snmp_data + self.get_snmp(oids)
-                    unique = []
-                    [unique.append(x) for x in snmp_data if x not in unique]
-                    snmp_data = unique
                 else:
                     snmp_data = self.get_snmp(oids)
             #--END OF TRANSLATOR--#
