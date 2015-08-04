@@ -34,7 +34,7 @@ How to use?
 - Config file named as check_idrac.conf. Edit and full fill with your info.
 - Now lets start checking what hardware type you have:
 
-#./check_idrac_2.py -H 10.10.10.20 -c check_idrac.conf
+#./check_idrac_2.py -H 10.10.10.20 -f check_idrac.conf
 
 - Output should like this:
 
