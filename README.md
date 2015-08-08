@@ -38,5 +38,5 @@ CPU2 Temp: 41.0 C ENABLED/OK.
 OK - System Board Inlet Temp: 19.0 C ENABLED/OK
 ```
 
-[CHANGELOG]: ./CHANGELOG.md
-a
+[CHANGELOG]: (./CHANGELOG.md)
+
