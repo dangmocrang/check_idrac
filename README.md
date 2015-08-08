@@ -43,4 +43,4 @@ OK - System Board Inlet Temp: 19.0 C ENABLED/OK
 
 ## License
 
-GPL
+GPLv3
