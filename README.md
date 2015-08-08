@@ -1,9 +1,10 @@
 # Check_iDRAC
 Version 2.0b9
 
-[CHANGELOG.md] (./CHANGELOG.md)
+[CHANGELOG] (./CHANGELOG.md)
 
-This check monitor idrac 7 hardware status via SNMP:
+## Features
+Check idrac 7 hardwares status via SNMP. Currently supports these hardware:
 - Virtual Disk
 - Physical Disk
 - Memory
@@ -14,9 +15,8 @@ This check monitor idrac 7 hardware status via SNMP:
 - Battery
 - Temperature Sensor
 
-This script query SNMP directly to IDRAC device, not via any openmanage suit.
-
-## Example 1
+## Example
+### Example 1
 
 ./idrac_2.0b8 -H 10.10.10.1 -f check_idrac.conf -w sensor
 
@@ -30,10 +30,17 @@ CPU1 Temp: 40.0 C ENABLED/OK
 CPU2 Temp: 41.0 C ENABLED/OK.
 ```
 
-## Example 2
+### Example 2
 
 ./idrac_2.0b8 -H 10.10.10.1 -f check_idrac.conf -w sensor#1
 
 ```
 OK - System Board Inlet Temp: 19.0 C ENABLED/OK
 ```
+
+## Manual
+[MANUAL] (./manual.txt)
+
+## License
+
+GPL
