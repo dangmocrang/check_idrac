@@ -1,20 +1,20 @@
-Check_iDRAC version 2.1
-Nguyen Duc Trung Dung
-ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com
-dybn.blogspot.com
+# Check_iDRAC version 2.1
+Nguyen Duc Trung Dung (ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com)
+website: dybn.blogspot.com
 NOC leader/R&D/Application specialist at SwissPostSolution VietNam
--------------------------------------------------------
 
-How it works?
+#Manual 
+
+## How it works?
 - Simple, this check use snmpwalk command which included with net-snmp package you installed.
 - It run snmpwalk instance to send SNMP request to idrac and parsing result data into human readable form.
 
-Requires:
+## Requires:
 - This check included with DELL IDRAC MIB file (required). You can copy MIB file to your default MIB folder, usually
 is /usr/share/snmp/mibs/. If you don't want to do this just keep it where you want and user option -m/--mib with path to
 it.
 
-Supported hardware type:
+## Supported hardware type:
 - Power Supply
 - Power Unit
 - Fan
@@ -25,7 +25,7 @@ Supported hardware type:
 - CPU
 - Sensor
 
-How to use?
+# How to use?
 ## Everything in cli
 ### Scan all
 #./check_idrac_2.py -H 10.10.10.20 -v2c -c public
