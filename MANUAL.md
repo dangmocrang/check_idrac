@@ -25,10 +25,10 @@ it.
 - CPU
 - Sensor
 
-# How to use?
-## Everything in cli
-### Scan all
-#./check_idrac_2.py -H 10.10.10.20 -v2c -c public
+## How to use?
+### Everything in cli
+**Scan all**
+./check_idrac_2.py -H 10.10.10.20 -v2c -c public
 
 ```PS
 --PS 1: OK, Volt I/O: 264 V/230 V, Current: 0.4 A, Watt I/O: 900 W/750 W
@@ -70,7 +70,7 @@ CPU
 ```
 
 ### Group scan
-#./check_idrac_2.py -H 10.10.10.20 -v2c -c public -w MEM
+./check_idrac_2.py -H 10.10.10.20 -v2c -c public -w MEM
 
 ```
 Memory 1 (DIMM Socket A1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC73]
@@ -87,7 +87,7 @@ OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N
 ```
 
 ### Everything in configuration file and for specific hardware
-#./check_idrac_2.py -H 10.10.10.20 -f check_idrac.conf -w MEM#2
+./check_idrac_2.py -H 10.10.10.20 -f check_idrac.conf -w MEM#2
 
 ## What is STATE ALERT DEFINITION?
 - Every admin has their own reason/style when checking device so I dont want to force you to expected
