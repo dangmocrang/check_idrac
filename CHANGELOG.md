@@ -1,4 +1,20 @@
 # Change Log
+## [2.1]
+### Fixed bug:
+- Fix bug while check vdisk bad block
+
+### Features:
+- Script no longer requires configuration file to work.
+- You can use both cli and configuration file at same time. cli parameters will overwrite configurations. or you can set everything in configuraiton file.
+- Disables alert no longer disable performance data.
+- Disables alert now also remove prefix state string.
+- No longer sets default theshold for hardware. State alert still get default threshold if not set.
+- Allows ignore alert on chosen hardware by leaving its alert threshold blank or use 'none' string.
+- Remove feature generate default configuration file. You should use the one on this git repo.
+
+### Change code:
+- Improve code structure.
+- Remove manual function.
 
 ## [2.0b9]
 ### Fixed bug:
