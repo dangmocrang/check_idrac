@@ -1,5 +1,5 @@
 # Check_iDRAC
-Version 2.0b9
+Version 2.1
 
 [CHANGELOG] (./CHANGELOG.md)
 
