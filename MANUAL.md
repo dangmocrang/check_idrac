@@ -85,13 +85,14 @@ Memory 4 (DIMM Socket B2) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36B
 
 **Check specific hardware**
 
-#./check_idrac_2.py -H 10.10.10.20 -v2c -c public -w MEM#3
+./check_idrac_2.py -H 10.10.10.20 -v2c -c public -w MEM#3
 
 ```
 OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC8A]
 ```
 
-### Everything in configuration file and for specific hardware
+***Everything in configuration file and for specific hardware***
+
 ./check_idrac_2.py -H 10.10.10.20 -f check_idrac.conf -w MEM#2
 
 ## What is STATE ALERT DEFINITION?
