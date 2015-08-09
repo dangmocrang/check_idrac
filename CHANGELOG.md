@@ -4,6 +4,7 @@
 - Fix bug while check vdisk bad block
 
 ### Features:
+- Change configuration file syntax
 - Script no longer requires configuration file to work.
 - You can use both cli and configuration file at same time. cli parameters will overwrite configurations. or you can set everything in configuraiton file.
 - Disables alert no longer disable performance data.
