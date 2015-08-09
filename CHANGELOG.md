@@ -11,6 +11,7 @@
 - Disables alert now also remove prefix state string.
 - No longer sets default theshold for hardware. State alert still get default threshold if not set.
 - Allows ignore alert on chosen hardware by leaving its alert threshold blank or use 'none' string.
+- Allows set threshold for every hardware at once in configuration file.
 - Remove feature generate default configuration file. You should use the one on this git repo.
 
 ### Change code:
