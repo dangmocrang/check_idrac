@@ -1,4 +1,4 @@
-Check_iDRAC version 2.0
+Check_iDRAC version 2.1
 Nguyen Duc Trung Dung
 ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com
 dybn.blogspot.com
@@ -10,10 +10,9 @@ How it works?
 - It run snmpwalk instance to send SNMP request to idrac and parsing result data into human readable form.
 
 Requires:
-- This check included with DELL IDRAC MIB file. You can copy MIB file to your default MIB folder, usually
+- This check included with DELL IDRAC MIB file (required). You can copy MIB file to your default MIB folder, usually
 is /usr/share/snmp/mibs/. If you don't want to do this just keep it where you want and user option -m/--mib with path to
 it.
-- Remember that this check requires MIB to work.
 
 Supported hardware type:
 - Power Supply
@@ -27,19 +26,11 @@ Supported hardware type:
 - Sensor
 
 How to use?
-- First it need configuration file in order to work:
+## Everything in cli
+### Scan all
+#./check_idrac_2.py -H 10.10.10.20 -v2c -c public
 
-#./check_idrac_2.py --generate-config
-
-- Config file named as check_idrac.conf. Edit and full fill with your info.
-- Now lets start checking what hardware type you have:
-
-#./check_idrac_2.py -H 10.10.10.20 -f check_idrac.conf
-
-- Output should like this:
-
---------------------------------------------------------------------------------------
-PS
+```PS
 --PS 1: OK, Volt I/O: 264 V/230 V, Current: 0.4 A, Watt I/O: 900 W/750 W
 --PS 2: OK, Volt I/O: 264 V/230 V, Current: 0.2 A, Watt I/O: 900 W/750 W
 FAN
@@ -76,27 +67,29 @@ SENSOR
 CPU
 --CPU 1 (8 cores/16 threads): ENABLED/OK [Intel(R) Xeon(R) CPU E5-2650 0 @ 2.00GHz]
 --CPU 2 (8 cores/16 threads): ENABLED/OK [Intel(R) Xeon(R) CPU E5-2650 0 @ 2.00GHz]
---------------------------------------------------------------------------------------
+```
 
-- As you see it will scan all hardware type and the number of hw you have,
-of course in it supports. Note that when in scan mode it will ignore all alert threshold
-that you defined.
-- You can also scan only 1 type of hardware like this:
+### Group scan
+#./check_idrac_2.py -H 10.10.10.20 -v2c -c public -w MEM
 
-#./check_idrac_2.py -H 10.10.10.20 -c check_idrac.conf -w MEM
+```
 Memory 1 (DIMM Socket A1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC73]
 Memory 2 (DIMM Socket A2) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC8D]
 Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC8A]
 Memory 4 (DIMM Socket B2) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC09]
+```
 
-- or just third RAM DIMM
-#./check_idrac_2.py -H 10.10.10.20 -c check_idrac.conf -w MEM#3 -n
+### Check specific hardware
+#./check_idrac_2.py -H 10.10.10.20 -v2c -c public -w MEM#3
+
+```
 OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC8A]
+```
 
-- So, you notice that when we check third DIMM output return with "OK" word because it now run
-as nagios mode.
+### Everything in configuration file and for specific hardware
+#./check_idrac_2.py -H 10.10.10.20 -f check_idrac.conf -w MEM#2
 
-What is STATE ALERT DEFINITION?
+## What is STATE ALERT DEFINITION?
 - Every admin has their own reason/style when checking device so I dont want to force you to expected
 an alert like I do. That is reason for State alert and is defined in config file, that means
 every hardware part which has status as: ok/online/ready/disable/enable... will have
@@ -124,11 +117,5 @@ Why would someone need --no-alert?
 - For Testing purpose, check will not ask for threshold and speed up analyzing processes.
 - No alert also disables performance data output.
 
-Alert Threshold?
-- Each hardware type has unique threshold definition. In case you forgot to set threshold for hardware check its will
-use default threshold (DELL).
-- "-n" option will bypass alert function (also not ask for threshold) and always return with "OK" status. Be carefull
+- "-n" option will bypass alert function (also not ask for threshold) and always return with exit code = 0. Be carefull
 do not use "-n/--no-alert" options in production environment!!!
-
-Cache mode?
-- Removed since 2.0b2
