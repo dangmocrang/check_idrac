@@ -42,7 +42,7 @@ OK - System Board Inlet Temp: 19.0 C ENABLED/OK
 ```
 
 ## Manual
-[MANUAL] (./manual.txt)
+[MANUAL] (./MANUAL.md)
 
 ## License
 
