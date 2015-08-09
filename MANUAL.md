@@ -110,7 +110,9 @@ OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N
 - You see the words: ENABLED/OK ? The prefix "OK" exist because we defined "OK = enabled|ok" in config. If you change
 config to OK = online, so the output will be:
 
+```
 WARN - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED(!)/OK(!) [DDR3, Samsung, S/N: 36BDCC8A]
+```
 
 Its because "WARN = $ALL$" so all status the out of "OK" and "CRIT" range will be WARN.
 - You can either define state alert by options --ok/--warn/--crit or in config file.
