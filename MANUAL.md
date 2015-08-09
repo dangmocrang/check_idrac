@@ -1,6 +1,8 @@
 # Check_iDRAC version 2.1
 Nguyen Duc Trung Dung (ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com)
+
 website: dybn.blogspot.com
+
 NOC leader/R&D/Application specialist at SwissPostSolution VietNam
 
 #Manual 
@@ -28,6 +30,7 @@ it.
 ## How to use?
 ### Everything in cli
 **Scan all**
+
 ./check_idrac_2.py -H 10.10.10.20 -v2c -c public
 
 ```PS
@@ -69,7 +72,8 @@ CPU
 --CPU 2 (8 cores/16 threads): ENABLED/OK [Intel(R) Xeon(R) CPU E5-2650 0 @ 2.00GHz]
 ```
 
-### Group scan
+**Group scan**
+
 ./check_idrac_2.py -H 10.10.10.20 -v2c -c public -w MEM
 
 ```
@@ -79,7 +83,8 @@ Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36B
 Memory 4 (DIMM Socket B2) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC09]
 ```
 
-### Check specific hardware
+**Check specific hardware**
+
 #./check_idrac_2.py -H 10.10.10.20 -v2c -c public -w MEM#3
 
 ```
