@@ -1,5 +1,8 @@
 # Check_iDRAC
+
 Version 2.1
+
+**Latest version use different configuration file syntax**
 
 [CHANGELOG] (./CHANGELOG.md)
 
