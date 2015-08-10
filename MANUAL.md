@@ -104,6 +104,32 @@ OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N
 WARN - PS 1: OK, Volt I/O: 264 V/0 V, Current: 0.4 A, Watt I/O: 900.0 W/750(!) W
 ```
 
+***Set alert for Fan#1***
+
+./idrac2.1.py -H 10.10.10.20 -v2c -c public -w FAN#1 --fan-warn=4000,6000 --fan-crit=3000,7000
+
+***Set alert for Fan#1 in configuration file***
+
+./idrac2.1.py -H 10.10.10.20 -v2c -c public -w FAN#1
+
+within configuration file, under [fan] section:
+
+```
+[fan]
+thesholds = 4000,6000,3000,7000
+```
+
+or 
+
+```
+[fan]
+thesholds = none,6000,3000,7000
+```
+
+./idrac2.1.py -H 10.10.10.20 -v2c -c public -w FAN#1 --fan-warn=4000
+
+this is the same as above example
+
 ## What is STATE ALERT DEFINITION?
 - Every admin has their own reason/style when checking device so I dont want to force you to expected
 an alert like I do. That is reason for State alert and is defined in config file, that means
