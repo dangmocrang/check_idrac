@@ -88,7 +88,7 @@ Memory 4 (DIMM Socket B2) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36B
 
 ./idrac2.1.py -H 10.10.10.20 -v2c -c public -w MEM#3
 
-```OK
+```
 OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC8A]
 ```
 
@@ -100,7 +100,7 @@ OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N
 
 ./idrac2.1.py -H 10.10.10.20 -v2c -c public -w PS#1 --wat-warn=none,750
 
-```WARN
+```
 WARN - PS 1: OK, Volt I/O: 264 V/0 V, Current: 0.4 A, Watt I/O: 900.0 W/750(!) W
 ```
 
