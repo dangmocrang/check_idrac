@@ -85,7 +85,7 @@ Memory 4 (DIMM Socket B2) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36B
 
 **Check specific hardware**
 
-./check_idrac_2.py -H 10.10.10.20 -v2c -c public -w MEM#3
+./idrac2.1.py -H 10.10.10.20 -v2c -c public -w MEM#3
 
 ```
 OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC8A]
@@ -94,6 +94,14 @@ OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N
 ***Everything in configuration file and for specific hardware***
 
 ./check_idrac_2.py -H 10.10.10.20 -f check_idrac.conf -w MEM#2
+
+***Set alert threshold on Output WATT for Power Supply***
+
+./idrac2.1.py -H 10.10.10.20 -v2c -c public -w PS#1 --wat-warn=none,750
+
+```
+WARN - PS 1: OK, Volt I/O: 264 V/0 V, Current: 0.4 A, Watt I/O: 900.0 W/750(!) W
+```
 
 ## What is STATE ALERT DEFINITION?
 - Every admin has their own reason/style when checking device so I dont want to force you to expected
