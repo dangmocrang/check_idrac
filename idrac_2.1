@@ -762,7 +762,7 @@ class PARSER:
                         hw_2 = hw[2]
                     else: hw_2 = float(hw[2])/10
                     output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw_6, hw_5, hw_4, hw_2))
-        elif self.hardware[2] == 'Memory':
+        elif self.hardware2[] == 'Memory':
             value_on_alert = [1, 2]
             if self.alert is True:
                 hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
@@ -812,13 +812,7 @@ if __name__ == '__main__':
             if conf[key] is None:
                 config_reader()
                 break
-    for i in conf:
-        try: msg = conf_file[i]
-        except KeyError: msg = None
-        print i, conf[i], msg
     config_verify()
-
-    #--debug print check_all
     if conf['hardware'] is None:  # check all hardware
         print 'scan mode, do not use in monitoring system!'
         for key in all_hardware.keys():
@@ -837,7 +831,6 @@ if __name__ == '__main__':
             if not_found == len(all_hardware.keys()):
                 print 'sorry, hardware not supported!'
                 sys.exit(1)
-        #--debug print name, hw_order
         result, exit_code = PARSER().main()
         if conf['hardware'][1] is None:
             print 'scan mode, do not use in monitoring system!'
