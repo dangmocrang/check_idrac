@@ -33,7 +33,7 @@ it.
 
 ./check_idrac_2.py -H 10.10.10.20 -v2c -c public
 
-```
+```PS
 PS
 --PS 1: OK, Volt I/O: 264 V/230 V, Current: 0.4 A, Watt I/O: 900 W/750 W
 --PS 2: OK, Volt I/O: 264 V/230 V, Current: 0.2 A, Watt I/O: 900 W/750 W
@@ -88,8 +88,7 @@ Memory 4 (DIMM Socket B2) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36B
 
 ./idrac2.1.py -H 10.10.10.20 -v2c -c public -w MEM#3
 
-```
-OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC8A]
+```OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC8A]
 ```
 
 ***Everything in configuration file and for specific hardware***
