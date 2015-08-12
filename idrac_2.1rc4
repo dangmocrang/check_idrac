@@ -2,7 +2,7 @@
 __author__ = 'Nguyen Duc Trung Dung'
 __contact__ = 'ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com'
 __blog__ = 'dybn.blogspot.com'
-__version__ = '2.1'
+__version__ = '2.1rc4'
 __license__ = 'GPLv3'
 
 import commands
@@ -263,7 +263,7 @@ def config_reader():
                         conf_file[key] = is_number(conf_file[key], 4)
                     elif key in ['consumption_thresholds', 'vdisk_thresholds']:
                         conf_file[key] = is_number(conf_file[key], 2)
-                    if not key:
+                    if not conf_file[key]:
                         conf_file[key] = None
 
 
@@ -285,6 +285,9 @@ def config_verify():  # check if configurations are properly set
                           'snmp_authentication_password', 'snmp_privacy_protocol', 'snmp_privacy_password',
                           'snmp_security_level']:
             if conf[parameter] is None: conf[parameter] = conf_file[parameter]
+        if conf['state_ok'] is None: conf['state_ok'] = conf_file['state_ok']
+        if conf['state_warn'] is None: conf['state_warn'] = conf_file['state_warn']
+        if conf['state_crit'] is None: conf['state_crit'] = conf_file['state_crit']
     # verify snmp
     if conf['snmp_version'] == '2c' or conf['snmp_version'] == '2C':
         if conf['snmp_community'] is None:
