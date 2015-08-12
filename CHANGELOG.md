@@ -1,5 +1,8 @@
 # Change Log
 ## [2.1]
+### Release 3
+- Fix typo mistakes
+
 ### Fixed bug:
 - Fix bug while check vdisk bad block
 
