@@ -1,5 +1,8 @@
 # Change Log
 ## [2.1]
+### Release 4
+- Fix bug not read state thresholds from configuration file
+
 ### Release 3
 - Fix typo mistakes
 
