@@ -1,4 +1,7 @@
 # Change Log
+## [2.2rc1]
+- Allow global check, script now return with exit code status follow by hardware status, but not prefix.
+
 ## [2.1]
 ### Release 4
 - Fix bug not read state thresholds from configuration file
