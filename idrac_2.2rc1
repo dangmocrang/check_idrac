@@ -822,11 +822,11 @@ if __name__ == '__main__':
             conf['hardware'] = [key, None]
             hw_info = all_hardware[key]
             result, tmp_code = PARSER().main()
-            if tmp_code == 2:
-                exit_code = tmp_code
-            elif tmp_code == 1:
+            if tmp_code[0] == 2:
+                exit_code = tmp_code[0]
+            elif tmp_code[0] == 1:
                 if exit_code != 2:
-                    exit_code = tmp_code
+                    exit_code = tmp_code[0]
             print '%s' % key
             sys.stdout.write('--')
             print '\n--'.join(result)
