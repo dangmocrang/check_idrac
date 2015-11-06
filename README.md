@@ -2,7 +2,7 @@
 
 Version 2.2rc1
 
-**Version 2.1 uses different configuration file syntax**
+**Configuration file syntax change since version 2.1**
 
 [CHANGELOG] (./CHANGELOG.md)
 
