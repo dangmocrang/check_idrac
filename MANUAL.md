@@ -13,7 +13,7 @@ NOC leader/Solution Architect at Swiss Post Solution VietNam
 
 ## Requires:
 - This check included with DELL IDRAC MIB file (required). You can copy MIB file to your default MIB folder, usually
-is /usr/share/snmp/mibs/. If you don't want to do this just keep it where you want and user option -m/--mib with path to
+is /usr/share/snmp/mibs/. If you don't want to do this, keep it where you want and use option -m/--mib with absolute path to
 it.
 
 ## Supported hardware type:
