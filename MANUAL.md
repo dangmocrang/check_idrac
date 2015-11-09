@@ -136,15 +136,30 @@ an alert like I do. That is reason for State alert and is defined in config file
 every hardware part which has status as: ok/online/ready/disable/enable... will have
 alert rule based on these configs.
 - As in sample config file you will see something like this:
+
+```
 OK = ok|online|spunup|full|ready|enabled|presence
 WARN = $ALL$
 CRIT = critical|nonRecoverable|fail
+```
 
-- "OK" (config) means, in example with third RAM DIMM:
-OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC8A]
-- You see the words: ENABLED/OK ? The prefix "OK" exist because we defined "OK = enabled|ok" in config. If you change
-config to OK = online, so the output will be:
-
+So in example, third RAM DIMM with output like this:
+```
+Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC8A]
+```
+If OK State was defined with: 
+```
+OK = ok|online|spunup|full|ready|enabled|presence
+```
+The check result will be:
+```
+OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED(!)/OK(!) [DDR3, Samsung, S/N: 36BDCC8A]
+```
+You see the words: ENABLED/OK ? The prefix "OK" exist because we defined "OK = ok|online|spunup|full|ready|enabled|presence" in config. If you change config to:
+```
+OK = online|spunup|full|ready|presence
+```
+Check result will be this:
 ```
 WARN - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED(!)/OK(!) [DDR3, Samsung, S/N: 36BDCC8A]
 ```
