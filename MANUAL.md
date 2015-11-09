@@ -130,6 +130,16 @@ thesholds = none,6000,3000,7000
 
 this is the same as above example
 
+***Threshold explanation***
+For some hardware types, you will see --xxx-warn=MINWARN,MAXWARN or MINCRIT,MAXCRIT. So what is this?
+Let's assume we have a sensor temperature, if temperature raise too high it would be trouble and if temp is too low we are in serious trouble too, so to ensure the temp is not higher then 60 degree and now drop below 30 degree we define threshold in pair:
+```
+--temp-warn=29,61
+--temp-crit=25,65
+```
+This means if temp lower than 30 degree (in range of 26 to 29 degree) OR if temp higher than 60 degree (in range of 61 to 64) check will show you WARNING.
+If temp lower than 26 (in range of 25 or lower) OR if temp higher than 64 (in rage of 65 or higher) check will show you CRITICAL.
+
 ## What is STATE ALERT DEFINITION?
 - Every admin has their own reason/style when checking device so I dont want to force you to expected
 an alert like I do. That is reason for State alert and is defined in config file, that means
@@ -153,7 +163,7 @@ OK = ok|online|spunup|full|ready|enabled|presence
 ```
 The check result will be:
 ```
-OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED(!)/OK(!) [DDR3, Samsung, S/N: 36BDCC8A]
+OK - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED/OK [DDR3, Samsung, S/N: 36BDCC8A]
 ```
 You see the words: ENABLED/OK ? The prefix "OK" exist because we defined "OK = ok|online|spunup|full|ready|enabled|presence" in config. If you change config to:
 ```
@@ -166,10 +176,10 @@ WARN - Memory 3 (DIMM Socket B1) 16.00 GB/1600 MHz: ENABLED(!)/OK(!) [DDR3, Sams
 
 Its because "WARN = $ALL$" so all status the out of "OK" and "CRIT" range will be WARN.
 - You can either define state alert by options --ok/--warn/--crit or in config file.
-- You can not use $ALL$ for two states at once.
+- You can not use $ALL$ for two states at same time.
 - I use simple search, in ex "online" will matchs onlines/xxonline/onlinebutnotok... but since device does not return
 those weird outputs so we will be ok.
-- If no $ALL$ in state definition, all states that are out of states defined here will be reported as UNKNOWN.
+- If no $ALL$ in state definition, all states that are not belong to states we defined here, will be reported as UNKNOWN.
 
 Why would someone need --no-alert?
 - For Testing purpose, check will not ask for threshold and speed up analyzing processes.
