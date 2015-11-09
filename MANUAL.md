@@ -3,7 +3,7 @@ Nguyen Duc Trung Dung (ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com)
 
 website: dybn.blogspot.com
 
-NOC leader/R&D/Application specialist at SwissPostSolution VietNam
+NOC leader/Solution Architect at Swiss Post Solution VietNam
 
 #Manual 
 
