@@ -133,6 +133,7 @@ this is the same as above example
 ***Threshold explanation***
 
 For some hardware types, you will see --xxx-warn=MINWARN,MAXWARN or MINCRIT,MAXCRIT. So what is this?
+
 Let's assume we have a sensor temperature, if temperature raise too high it would be trouble and if temp is too low we are in serious trouble too, so to ensure the temp is not higher then 60 degree and now drop below 30 degree we define threshold in pair:
 ```
 --temp-warn=29,61
