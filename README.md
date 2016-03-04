@@ -1,6 +1,6 @@
 # Check_iDRAC
 
-Version 2.2rc2
+Version 2.2rc3
 
 **Configuration file syntax change since version 2.1**
 
