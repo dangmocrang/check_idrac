@@ -344,7 +344,7 @@ def config_verify():  # check if configurations are properly set
         if c in conf['state_ok']:
             print 'state thresholds overlapped!'
             sys.exit(1)
-    conf['state_ok'] = '|'.join(conf['state_ok'])p
+    conf['state_ok'] = '|'.join(conf['state_ok'])
     conf['state_warn'] = '|'.join(conf['state_warn'])
     conf['state_crit'] = '|'.join(conf['state_crit'])
                         
