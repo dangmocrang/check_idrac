@@ -1,5 +1,8 @@
 # Change Log
-## [2.2rc1]
+## [2.2rc3]
+- Fix performance data function not work properly since it still using old configuration syntax
+
+## [2.2rc2]
 - Change line 247 to use old exception syntax
 
 ## [2.2rc1]
