@@ -1,5 +1,8 @@
 # Change Log
 ## [2.2rc1]
+- Change line 247 to use old exception syntax
+
+## [2.2rc1]
 - Allow global check, script now return with exit code status follow by hardware status, but not prefix.
 
 ## [2.1]
