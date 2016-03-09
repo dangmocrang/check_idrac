@@ -1,4 +1,7 @@
 # Change Log
+## [2.2rc4]
+- Remove Warn and Crit information in performance data since nagios support only WARN and CRIT but script uses 4 values for this: minWARN, maxWARN, minCRIT and maxCRIT.
+
 ## [2.2rc3]
 - Fix performance data function not work properly since it still using old configuration syntax
 
