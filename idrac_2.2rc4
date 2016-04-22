@@ -668,7 +668,7 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                if self.perf is True:
+                if self.perf is True and hw[3].split('(')[0]:
                     perf_data = ' | RPM=%s;;;%s;%s' % (hw[3].split('(')[0], conf['fan_thresholds'][2], conf['fan_thresholds'][3])
                     perf_data = perf_data.replace('none','')
                 else:
@@ -685,7 +685,7 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                if self.perf is True:
+                if self.perf is True and hw[3]:
                     perf_data = ' | Temperature=%s;;;%s;%s' \
                                 % (hw[3], conf['sensor_thresholds'][2], conf['sensor_thresholds'][3])
                     perf_data = perf_data.replace('none','')
@@ -720,7 +720,7 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                if self.perf is True:
+                if self.perf is True and hw[4].split('(')[0]:
                     perf_data = ' | PwrConsumption=%s;;;;' % (hw[4].split('(')[0])
                     perf_data = perf_data.replace('none','')
                 else:
@@ -741,8 +741,15 @@ class PARSER:
                     if hw[4] == '(N/A)':
                         hw_4 = hw[4]
                     else: hw_4 = round(float(hw[4])/10, 0)
-                    perf_data = ' | VoltINPUT=%s;;;; VoltOUTPUT=%s;;;; Current=%s;;;; WattINPUT=%s;;;; WattOUTPUT=%s;;;;'\
-                                %(hw[3], hw[6].split('(')[0], hw[5].split('(')[0], hw_4, hw[2].split('(')[0])
+                    perf_data = '';
+                    perf_list = [];
+                    perf_list.append(' |');
+                    if hw[3]: perf_list.append('VoltINPUT=%s;;;; ' % hw[3])
+                    if hw[6].split('(')[0]: perf_list.append('VoltOUTPUT=%s;;;; ' % hw[6].split('(')[0])
+                    if hw[5].split('(')[0]: perf_list.append('Current=%s;;;; ' % hw[5].split('(')[0])
+                    if hw_4: perf_list.append('WattINPUT=%s;;;; ' % hw_4)
+                    if hw[2].split('(')[0]: perf_list.append('WattOUTPUT=%s;;;;' % hw[2].split('(')[0])
+                    if len(perf_list) > 1: perf_data = " ".join(perf_list)
                     perf_data = perf_data.replace('none','')
                 else:
                     perf_data = ''
