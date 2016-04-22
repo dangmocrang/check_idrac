@@ -685,7 +685,7 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                if self.perf is True and hw[3]:
+                if self.perf is True and hw[3] and hw[3] != '(N/A)':
                     perf_data = ' | Temperature=%s;;;%s;%s' \
                                 % (hw[3], conf['sensor_thresholds'][2], conf['sensor_thresholds'][3])
                     perf_data = perf_data.replace('none','')
