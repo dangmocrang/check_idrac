@@ -7113,7 +7113,8 @@ physicalDiskPowerState OBJECT-TYPE
                     other(1),
                     spunUp(2),
                     spunDown(3),
-                    transition(4)
+                    transition(4),
+                    on(5),
                     }
     MAX-ACCESS      read-only
     STATUS          current
