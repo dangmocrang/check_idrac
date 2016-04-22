@@ -686,7 +686,7 @@ class PARSER:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if self.perf is True:
-                    perf_data = ' | Temperature=%sC;;;%s;%s' \
+                    perf_data = ' | Temperature=%s;;;%s;%s' \
                                 % (hw[3], conf['sensor_thresholds'][2], conf['sensor_thresholds'][3])
                     perf_data = perf_data.replace('none','')
                 else:
@@ -721,7 +721,7 @@ class PARSER:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if self.perf is True:
-                    perf_data = ' | PwrConsumption=%sW;;;;' % (hw[4].split('(')[0])
+                    perf_data = ' | PwrConsumption=%s;;;;' % (hw[4].split('(')[0])
                     perf_data = perf_data.replace('none','')
                 else:
                     perf_data = ''
@@ -741,7 +741,7 @@ class PARSER:
                     if hw[4] == '(N/A)':
                         hw_4 = hw[4]
                     else: hw_4 = round(float(hw[4])/10, 0)
-                    perf_data = ' | VoltINPUT=%sV;;;; VoltOUTPUT=%sV;;;; Current=%sA;;;; WattINPUT=%sW;;;; WattOUTPUT=%sW;;;;'\
+                    perf_data = ' | VoltINPUT=%s;;;; VoltOUTPUT=%s;;;; Current=%s;;;; WattINPUT=%s;;;; WattOUTPUT=%s;;;;'\
                                 %(hw[3], hw[6].split('(')[0], hw[5].split('(')[0], hw_4, hw[2].split('(')[0])
                     perf_data = perf_data.replace('none','')
                 else:
