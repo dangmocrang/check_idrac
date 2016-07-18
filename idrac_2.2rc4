@@ -479,116 +479,116 @@ class PARSER:
                     stat_t = int(stat)
                     if self.hardware[2] == 'Fan':
                         if conf['fan_thresholds'][2] != 'none':
-                            if int(tmp[key][stat_t]) <= conf['fan_thresholds'][2]:
+                            if int(tmp[key][stat_t].strip('(!)')) <= conf['fan_thresholds'][2]:
                                 tmp[key][stat_t] += '(!!)'
                                 alert = 2
                         if conf['fan_thresholds'][3] != 'none':
-                            if int(tmp[key][stat_t]) >= conf['fan_thresholds'][3]:
+                            if int(tmp[key][stat_t].strip('(!)')) >= conf['fan_thresholds'][3]:
                                 tmp[key][stat_t] += '(!!)'
                                 alert = 2
                         if conf['fan_thresholds'][0] != 'none':
-                            if int(tmp[key][stat_t]) <= conf['fan_thresholds'][0]:
+                            if int(tmp[key][stat_t].strip('(!)')) <= conf['fan_thresholds'][0]:
                                 tmp[key][stat_t] += '(!)'
                                 if alert != 2: alert = 1
                         if conf['fan_thresholds'][1] != 'none':
-                            if int(tmp[key][stat_t]) >= conf['fan_thresholds'][1]:
+                            if int(tmp[key][stat_t].strip('(!)')) >= conf['fan_thresholds'][1]:
                                 tmp[key][stat_t] += '(!)'
                                 if alert != 2: alert = 1
                     elif self.hardware[2] == 'PS':
                         if stat_t == 6:
-                            tmp[key][stat_t] = float(tmp[key][stat_t])/1000
+                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/1000
                             tmp[key][stat_t] = '%.0f' % tmp[key][stat_t]
                             if conf['voltage_thresholds'][3] != 'none':
-                                if float(tmp[key][stat_t]) >= conf['voltage_thresholds'][3]:
+                                if float(tmp[key][stat_t].strip('(!)')) >= conf['voltage_thresholds'][3]:
                                     tmp[key][stat_t] += '(!!)'
                                     alert = 2
                             if conf['voltage_thresholds'][2] != 'none':
-                                if float(tmp[key][stat_t]) <= conf['voltage_thresholds'][2]:
+                                if float(tmp[key][stat_t].strip('(!)')) <= conf['voltage_thresholds'][2]:
                                     tmp[key][stat_t] += '(!!)'
                                     alert = 2
                             if conf['voltage_thresholds'][1] != 'none':
-                                if float(tmp[key][stat_t]) >= conf['voltage_thresholds'][1]:
+                                if float(tmp[key][stat_t].strip('(!)')) >= conf['voltage_thresholds'][1]:
                                     tmp[key][stat_t] += '(!)'
                                     if alert != 2: alert = 1
                             if conf['voltage_thresholds'][0] != 'none':
-                                if float(tmp[key][stat_t]) <= conf['voltage_thresholds'][0]:
+                                if float(tmp[key][stat_t].strip('(!)')) <= conf['voltage_thresholds'][0]:
                                     tmp[key][stat_t] += '(!)'
                                     if alert != 2: alert = 1
                         elif stat_t == 5:
-                            tmp[key][stat_t] = float(tmp[key][stat_t])/10
+                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/10
                             tmp[key][stat_t] = '%.1f' % tmp[key][stat_t]
                             if conf['current_thresholds'][3] != 'none':
-                                if float(tmp[key][stat_t]) >= conf['current_thresholds'][3]:
+                                if float(tmp[key][stat_t].strip('(!)')) >= conf['current_thresholds'][3]:
                                     tmp[key][stat_t] += '(!!)'
                                     alert = 2
                             if conf['current_thresholds'][2] != 'none':
-                                if float(tmp[key][stat_t]) <= conf['current_thresholds'][2]:
+                                if float(tmp[key][stat_t].strip('(!)')) <= conf['current_thresholds'][2]:
                                     tmp[key][stat_t] += '(!!)'
                                     alert = 2
                             if conf['current_thresholds'][1] != 'none':
-                                if float(tmp[key][stat_t]) >= conf['current_thresholds'][1]:
+                                if float(tmp[key][stat_t].strip('(!)')) >= conf['current_thresholds'][1]:
                                     tmp[key][stat_t] += '(!)'
                                     if alert != 2: alert = 1
                             if conf['current_thresholds'][0] != 'none':
-                                if float(tmp[key][stat_t]) <= conf['current_thresholds'][0]:
+                                if float(tmp[key][stat_t].strip('(!)')) <= conf['current_thresholds'][0]:
                                     tmp[key][stat_t] += '(!)'
                                     if alert != 2: alert = 1
                         elif stat_t == 2:
-                            tmp[key][stat_t] = float(tmp[key][stat_t])/10
+                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/10
                             tmp[key][stat_t] = '%.0f' % tmp[key][stat_t]
                             if conf['watt_thresholds'][3] != 'none':
-                                if float(tmp[key][stat_t]) >= conf['watt_thresholds'][3]:
+                                if float(tmp[key][stat_t].strip('(!)')) >= conf['watt_thresholds'][3]:
                                     tmp[key][stat_t] += '(!!)'
                                     alert = 2
                             if conf['watt_thresholds'][2] != 'none':
-                                if float(tmp[key][stat_t]) <= conf['watt_thresholds'][2]:
+                                if float(tmp[key][stat_t].strip('(!)')) <= conf['watt_thresholds'][2]:
                                     tmp[key][stat_t] += '(!!)'
                                     alert = 2
                             if conf['watt_thresholds'][1] != 'none':
-                                if float(tmp[key][stat_t]) >= conf['watt_thresholds'][1]:
+                                if float(tmp[key][stat_t].strip('(!)')) >= conf['watt_thresholds'][1]:
                                     tmp[key][stat_t] += '(!)'
                                     if alert != 2:
                                         alert = 1
                             if conf['watt_thresholds'][0] != 'none':
-                                if float(tmp[key][stat_t]) <= conf['watt_thresholds'][0]:
+                                if float(tmp[key][stat_t].strip('(!)')) <= conf['watt_thresholds'][0]:
                                     tmp[key][stat_t] += '(!)'
                                     if alert != 2:
                                         alert = 1
                     elif self.hardware[2] == 'PU':
                         if conf['consumption_thresholds'][1] != 'none':
-                            if float(tmp[key][stat_t]) >= conf['consumption_thresholds'][1]:
+                            if float(tmp[key][stat_t].strip('(!)')) >= conf['consumption_thresholds'][1]:
                                 tmp[key][stat_t] += '(!!)'
                                 alert = 2
                         if conf['consumption_thresholds'][0] != 'none':
-                            if float(tmp[key][stat_t]) >= conf['consumption_thresholds'][0]:
+                            if float(tmp[key][stat_t].strip('(!)')) >= conf['consumption_thresholds'][0]:
                                 tmp[key][stat_t] += '(!)'
                                 if alert != 2: alert = 1
                     elif self.hardware[2] == 'Sensor':
-                        tmp[key][stat_t] = float(tmp[key][stat_t])/10
+                        tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/10
                         tmp[key][stat_t] = '%.1f' %tmp[key][stat_t]
                         if conf['sensor_thresholds'][3] != 'none':
-                            if float(tmp[key][stat_t]) >= conf['sensor_thresholds'][3]:
+                            if float(tmp[key][stat_t].strip('(!)')) >= conf['sensor_thresholds'][3]:
                                 tmp[key][stat_t] += '(!!)'
                                 alert = 2
                         if conf['sensor_thresholds'][2] != 'none':
-                            if float(tmp[key][stat_t]) <= conf['sensor_thresholds'][2]:
+                            if float(tmp[key][stat_t].strip('(!)')) <= conf['sensor_thresholds'][2]:
                                 tmp[key][stat_t] += '(!!)'
                                 alert = 2
                         if conf['sensor_thresholds'][1] != 'none':
-                            if float(tmp[key][stat_t]) >= conf['sensor_thresholds'][1]:
+                            if float(tmp[key][stat_t].strip('(!)')) >= conf['sensor_thresholds'][1]:
                                 tmp[key][stat_t] += '(!)'
                                 if alert != 2: alert = 1
                         if conf['sensor_thresholds'][0] != 'none':
-                            if float(tmp[key][stat_t]) <= conf['sensor_thresholds'][0]:
+                            if float(tmp[key][stat_t].strip('(!)')) <= conf['sensor_thresholds'][0]:
                                 tmp[key][stat_t] += '(!)'
                                 if alert != 2: alert = 1
                     elif self.hardware[2] == 'VDisk':
                         if conf['vdisk_thresholds'][1] != 'none':
-                            if int(tmp[key][stat_t]) >= conf['vdisk_thresholds'][1]:
+                            if int(tmp[key][stat_t].strip('(!)')) >= conf['vdisk_thresholds'][1]:
                                 tmp[key][stat_t] += '(!!)'
                                 alert = 2
                         if conf['vdisk_thresholds'][0] != 'none':
-                            if int(tmp[key][stat_t]) >= conf['vdisk_thresholds'][0]:
+                            if int(tmp[key][stat_t].strip('(!)')) >= conf['vdisk_thresholds'][0]:
                                 tmp[key][stat_t] += '(!!)'
                                 alert = 2
         return tmp, code[alert]
