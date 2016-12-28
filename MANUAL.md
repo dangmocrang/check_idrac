@@ -119,7 +119,7 @@ within configuration file, under [fan] section:
 thesholds = 4000,6000,3000,7000
 ```
 
-or 
+or you can combine both config file and command cli option
 
 ```
 [fan]
