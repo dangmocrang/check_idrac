@@ -367,10 +367,10 @@ class PARSER:
                     conf['snmp_authentication_protocol'], conf['snmp_authentication_password'],
                     conf['snmp_privacy_protocol'], conf['snmp_privacy_password'],
                     oids, self.mib_file)
-        cmd_v2 = '%s %s -O q -v %s -c %s %s -m %s' \
-                 % (self.snmp_command, self.host, conf['snmp_version'],
+        cmd_v2 = '%s -O q -v %s -c %s -m %s %s %s' \
+                 % (self.snmp_command, conf['snmp_version'],
                     conf['snmp_community'],
-                    oids, self.mib_file)
+                    self.mib_file, self.host, oids)        
         available_cmd = {'3': cmd_v3, '2c': cmd_v2}
         snmp_cli = available_cmd[conf['snmp_version']]
         status, output = run(snmp_cli)  # query snmp data
