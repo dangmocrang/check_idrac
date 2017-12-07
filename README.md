@@ -17,6 +17,7 @@ Check idrac 7 hardwares status via SNMP. Currently supports these hardware:
 - Fan
 - Battery
 - Temperature Sensor
+- Global
 
 ## Manual
 [MANUAL] (./MANUAL.md)

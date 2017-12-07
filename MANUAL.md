@@ -26,6 +26,7 @@ it.
 - Virtual Disk
 - CPU
 - Sensor
+- Global
 
 ## How to use?
 ### Everything in cli
