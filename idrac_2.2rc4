@@ -63,6 +63,8 @@ conf_file = {'snmp_version': None,
 all_hardware = {
     #'DEV': ['SNMP name', 'Description/Additional SNMP name', 'Full name', [value/search pattern]]
     #Script will first read SNMP name to get snmp data form device, then use value part to search and parse info
+    'GLOBAL': ['systemStateGlobalSystemStatus', '',
+                'Global', r'systemStateGlobalSystemStatus\.|' ],
     'MEM': ['memoryDeviceTable', '1.3.6.1.4.1.674.10892.5.4.1100.50',
             'Memory', r'memoryDeviceIndex\.|'
                       r'memoryDeviceStateSettings\.|'
@@ -801,6 +803,17 @@ class PARSER:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 output.append(tmp % (hw[4].replace('"', ''), hw[1], hw[2], hw[3]))
+        elif self.hardware[2] == 'Global':
+            value_on_alert = [1]
+            ## print hw_dict
+            if self.alert is True:
+                hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
+            tmp = '%s %s'
+            for hw in hw_dict.values():
+                for v in value_on_alert:
+                    v = int(v)
+                    hw[v] = hw[v].upper()
+                output.append(tmp % (self.hardware[0],hw[0]))
         elif self.hardware[2] == 'VDisk':
             value_on_alert = [2, 5, '6']
             if self.alert is True:
@@ -810,7 +823,7 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                if hw[3] == '(N/A)':
+                if hw[3] == '(N/A)' or hw[3] == '(n/a)':
                     hw_3 = hw[3]
                 else: hw_3 = round(float(hw[3])/1024, 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[1].replace('"', ''), hw[5], hw[2],
