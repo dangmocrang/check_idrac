@@ -1,9 +1,9 @@
 # Check_iDRAC version 2.1
 Nguyen Duc Trung Dung (ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com)
 
-website: dybn.blogspot.com
+website: 
 
-NOC leader/Solution Architect at Swiss Post Solution VietNam
+AWS Cloud Ops at ADURO, INC
 
 #Manual 
 
