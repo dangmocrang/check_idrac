@@ -447,9 +447,9 @@ class PARSER:
                 if type(stat) == int:
                     if conf['state_warn'] == '$ALL$':
                         #debug print 'WARN ALL'
-                        if re.search(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
+                        if re.match(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
                             continue
-                        elif re.search(conf['state_crit'], tmp[key][stat], re.IGNORECASE):
+                        elif re.match(conf['state_crit'], tmp[key][stat], re.IGNORECASE):
                             tmp[key][stat] += '(!!)'  # more useful with check_mk frontend
                             alert = 2
                         else:
@@ -457,9 +457,9 @@ class PARSER:
                             if alert != 2: alert = 1
                     elif conf['state_crit'] == '$ALL$':
                         #debug print 'CRIT ALL'
-                        if re.search(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
+                        if re.match(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
                             continue
-                        elif re.search(conf['state_warn'], tmp[key][stat], re.IGNORECASE):
+                        elif re.match(conf['state_warn'], tmp[key][stat], re.IGNORECASE):
                             tmp[key][stat] += '(!)'
                             if alert != 2: alert = 1
                         else:
@@ -467,12 +467,12 @@ class PARSER:
                             alert = 2
                     else:
                         #debug print 'NO ALL'
-                        if re.search(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
+                        if re.match(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
                             continue
-                        elif re.search(conf['state_warn'], tmp[key][stat], re.IGNORECASE):
+                        elif re.match(conf['state_warn'], tmp[key][stat], re.IGNORECASE):
                             tmp[key][stat] += '(!)'
                             if alert != 2: alert = 1
-                        elif re.search(conf['state_crit'], tmp[key][stat], re.IGNORECASE):
+                        elif re.match(conf['state_crit'], tmp[key][stat], re.IGNORECASE):
                             tmp[key][stat] += '(!!)'
                             alert = 2
                         else:
@@ -804,7 +804,7 @@ class PARSER:
                     hw[v] = hw[v].upper()
                 output.append(tmp % (hw[4].replace('"', ''), hw[1], hw[2], hw[3]))
         elif self.hardware[2] == 'Global':
-            value_on_alert = [1]
+            value_on_alert = [0]
             ## print hw_dict
             if self.alert is True:
                 hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
