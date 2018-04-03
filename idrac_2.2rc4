@@ -124,7 +124,8 @@ all_hardware = {
                       r'physicalDiskCapacityInMB\.|'
                       r'physicalDiskSpareState\.|'
                       r'physicalDiskMediaType\.|'
-                      r'physicalDiskPowerState\.'],
+                      r'physicalDiskPowerState\.|'
+                      r'physicalDiskSmartAlertIndication\.'],
     'VDISK': ['virtualDiskTable', 'Virtual Disk',
               'VDisk', r'virtualDiskNumber\.|'
                        r'virtualDiskName\.|'
@@ -332,7 +333,7 @@ def config_verify():  # check if configurations are properly set
             print 'file %s not found!' % conf['mib']
             sys.exit(1)
     # set default state alert if user forgot to set
-    if conf['state_ok'] is None: conf['state_ok'] = 'ok|online|on|spunup|full|ready|enabled|presence'
+    if conf['state_ok'] is None: conf['state_ok'] = '0|ok|online|on|spunup|full|ready|enabled|presence'
     if conf['state_warn'] is None: conf['state_warn'] = '$ALL$'
     if conf['state_crit'] is None: conf['state_crit'] = 'critical|nonRecoverable|fail'
     # verify if state alert is overlapped
@@ -646,11 +647,11 @@ class PARSER:
         output = []
         exit_code = [0, 'OK']
         if self.hardware[2] == 'PDisk':
-            value_on_alert = [3, 8]  # raise alert on these value. Mapped with all_hardware as list order.
+            value_on_alert = [3,7,9]  # raise alert on these value. Mapped with all_hardware as list order.
             # int type for status check, string type for range check
             if self.alert is True:
                 hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
-            tmp = '%s %s (%s) %s GB: %s, PowerStat: %s, HotSpare: %s [%s, %s, S/N: %s]'
+            tmp = '%s %s (%s) %s GB: %s, PowerStat: %s, HotSpare: %s [%s, %s, S/N: %s] isFailing: %s'
             for hw in hw_dict.values():
                 for v in value_on_alert:
                     v = int(v)
@@ -659,8 +660,8 @@ class PARSER:
                     hw_5 = hw[5]
                 else: hw_5 = round(float(hw[5])/1024, 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[1].split()[-1].replace('"', ''),
-                                     hw_5, hw[3], hw[8], hw[6].replace('HotSpare', '').replace('notASpare', 'no'),
-                                     hw[2].replace('"', ''), hw[7].upper(), hw[4].replace('"', '')))
+                                     hw_5, hw[3], hw[9], hw[6].replace('HotSpare', '').replace('notASpare', 'no'),
+                                     hw[2].replace('"', ''), hw[8].upper(), hw[4].replace('"', ''), hw[7]))
         elif self.hardware[2] == 'Fan':
             value_on_alert = [1, 2, '3']
             if self.alert is True:
