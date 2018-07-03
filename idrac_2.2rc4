@@ -410,8 +410,13 @@ class PARSER:
         for _ in data:
             if item.search(_):
                 #--debug print 'matched:', _
-                item_order = int(_.split()[0].split('.')[-1])
-                item_info = ' '.join(_.split()[1:])
+                try:
+                    item_order = int(_.split()[0].split('.')[-1])
+                    item_info = ' '.join(_.split()[1:])
+                except ValueError as inst:
+                    #print inst
+                    continue
+
                 if self.hardware[2] == 'PS':
                     if 'voltageProbeReading' in _:
                         item_order -= 25  # ps volt starting with number 26
