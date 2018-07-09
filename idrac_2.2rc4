@@ -672,7 +672,7 @@ class PARSER:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if self.perf is True and hw[3].split('(')[0]:
-                    perf_data = ' | FAN%s_RPM=%s;;;%s;%s' % (hw[0], hw[3].split('(')[0], conf['fan_thresholds'][2], conf['fan_thresholds'][3])
+                    perf_data = ' | RPM=%s;;;%s;%s' % (hw[3].split('(')[0], conf['fan_thresholds'][2], conf['fan_thresholds'][3])
                     perf_data = perf_data.replace('none','')
                 else:
                     perf_data = ''
@@ -689,8 +689,8 @@ class PARSER:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if self.perf is True and hw[3] and hw[3] != '(N/A)':
-                    perf_data = ' | %s=%s;;;%s;%s' \
-                                % (hw[4].replace('"', ''), hw[3], conf['sensor_thresholds'][2], conf['sensor_thresholds'][3])
+                    perf_data = ' | Temperature=%s;;;%s;%s' \
+                                % (hw[3], conf['sensor_thresholds'][2], conf['sensor_thresholds'][3])
                     perf_data = perf_data.replace('none','')
                 else:
                     perf_data = ''
