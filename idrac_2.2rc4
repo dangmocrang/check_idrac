@@ -253,7 +253,7 @@ def config_reader():
         else:
             for key in conf_file.keys():
                 try:
-                    conf_file[key] = reader.get(key.split('_')[0], key.split('_')[1])
+                    conf_file[key] = reader.get(key.split('_')[0], key.split('_',1)[1])
                 except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
                     if key in ['fan_thresholds', 'voltage_thresholds', 'current_thresholds', 'watt_thresholds',
                                'sensor_thresholds']:
