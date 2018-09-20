@@ -2,7 +2,7 @@
 __author__ = 'Nguyen Duc Trung Dung'
 __contact__ = 'ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com'
 __blog__ = 'dybn.blogspot.com'
-__version__ = '2.2rc4'
+__version__ = '2.2rc5'
 __license__ = 'GPLv3'
 
 import commands
@@ -172,6 +172,7 @@ def cli_reader():
     optp.add_option('-n', '--no-alert', help='always return with exit code 0', action='store_true', dest='no_alert')
     optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM')
     optp.add_option('-p', help='enable performance data', dest='perf', action='store_true')
+    optp.add_option('-i', help='only display WARN and CRIT, else OK', dest='style', action='store_true')
     optp.add_option('--fan-warn', help='FAN rpm warning thresholds', dest='fan_warn', metavar='MIN,MAX')
     optp.add_option('--fan-crit', help='FAN rpm critical thresholds', dest='fan_crit', metavar='MIN,MAX')
     optp.add_option('--temp-warn', help='TEMPERATURE warning thresholds', dest='temp_warn', metavar='MIN,MAX')
@@ -211,6 +212,8 @@ def cli_reader():
         if opts.crit: conf['state_crit'] = opts.crit
         if opts.no_alert is True: conf['alert'] = False
         if opts.perf is True: conf['perf'] = True
+        if opts.style is True: conf['style'] = True
+        else: conf['style'] = False
         # parse fan threshold
         conf['fan_thresholds'] = []
         for x in [opts.fan_warn, opts.fan_crit]:
@@ -842,7 +845,26 @@ if __name__ == '__main__':
     config_verify()
     if conf['hardware'] is None:  # check all hardware
         exit_code = 0
-        for key in all_hardware.keys():
+        if conf['style'] is True:      
+          for key in all_hardware.keys():
+              conf['hardware'] = [key, None]
+              hw_info = all_hardware[key]
+              result, tmp_code = PARSER().main()
+              if tmp_code[0] == 2:
+                  exit_code = tmp_code[0]
+                  for line in result:
+                    if "CRITICAL" in line and "systemStateGlobal" not in line:
+                      print(line)
+              elif tmp_code[0] == 1:
+                for line in result:
+                  if "(!)" in line and "systemStateGlobal" not in line:
+                    print(line)
+                  if exit_code != 2:
+                      exit_code = tmp_code[0]
+          if exit_code == 0:
+              print("OK")
+        else:
+          for key in all_hardware.keys():
             conf['hardware'] = [key, None]
             hw_info = all_hardware[key]
             result, tmp_code = PARSER().main()
