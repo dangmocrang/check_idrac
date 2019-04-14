@@ -656,9 +656,10 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                if hw[5] == '(N/A)':
+                try: # All ValueErrors from float are now handled, no need for an "N/A" check.
+                    hw_5 = round(float(hw[5])/1024, 2)
+                except ValueError:
                     hw_5 = hw[5]
-                else: hw_5 = round(float(hw[5])/1024, 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[1].split()[-1].replace('"', ''),
                                      hw_5, hw[3], hw[9], hw[6].replace('HotSpare', '').replace('notASpare', 'no'),
                                      hw[2].replace('"', ''), hw[8].upper(), hw[4].replace('"', ''), hw[7]))
@@ -698,9 +699,10 @@ class PARSER:
                 if self.alert is True:
                     output.append(tmp % (hw[4].replace('"', ''), hw[3], hw[1], hw[2], perf_data))
                 else:
-                    if hw[3] == '(N/A)':
+                    try:
+                        hw_3 = round(float(hw[3])/10, 1)
+                    except ValueError:
                         hw_3 = hw[3]
-                    else: hw_3 = round(float(hw[3])/10, 1)
                     output.append(tmp % (hw[4].replace('"', ''), hw_3, hw[1], hw[2], perf_data))
         elif self.hardware[2] == 'CPU':
             value_on_alert = [1, 2]
@@ -742,9 +744,10 @@ class PARSER:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if self.perf is True:
-                    if hw[4] == '(N/A)':
+                    try:
+                        hw_4 = round(float(hw[4])/10, 0)
+                    except ValueError:
                         hw_4 = hw[4]
-                    else: hw_4 = round(float(hw[4])/10, 0)
                     if not hw[3]:
 			hw[3] = 0
                     if not hw[6].split('(')[0]:
@@ -789,9 +792,10 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                if hw[5] == '(N/A)':
+                try:
+                    round(float(hw[5].split()[-1])/(1024*1024), 2)
+                except ValueError:
                     hw_5 = hw[5]
-                else: hw_5 = round(float(hw[5].split()[-1])/(1024*1024), 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[4].replace('.', ' ').replace('"', ''),
                                      hw_5, hw[6].split()[-1], hw[1], hw[2], hw[3].replace('deviceTypeIs', ''),
                                      hw[7].replace('"', ''), hw[8].replace('"', ''),))
@@ -825,9 +829,10 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                if hw[3] == '(N/A)' or hw[3] == '(n/a)':
+                try:
+                    hw_3 = round(float(hw[3])/1024, 2)
+                except ValueError:
                     hw_3 = hw[3]
-                else: hw_3 = round(float(hw[3])/1024, 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[1].replace('"', ''), hw[5], hw[2],
                                      hw[4].replace('r', 'RAID-'), hw_3, hw[6], hw[7].replace('"', '')))
         return output, exit_code
