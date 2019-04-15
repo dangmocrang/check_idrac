@@ -170,7 +170,7 @@ def cli_reader():
     optp.add_option('-f', help='configuration file. COMMAND LINE WILL OVERWRITE CONFIGURATION FILE PARAMETERS', dest='cfg', metavar='FILE')
     optp.add_option('-m', help='specific MIB file. Default is load all MIBs', dest='mib', metavar='FILE')
     optp.add_option('-n', '--no-alert', help='always return with exit code 0', action='store_true', dest='no_alert')
-    optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM')
+    optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM|FAN,MEM')
     optp.add_option('-p', help='enable performance data', dest='perf', action='store_true')
     optp.add_option('--fan-warn', help='FAN rpm warning thresholds', dest='fan_warn', metavar='MIN,MAX')
     optp.add_option('--fan-crit', help='FAN rpm critical thresholds', dest='fan_crit', metavar='MIN,MAX')
@@ -278,7 +278,8 @@ def config_verify():  # check if configurations are properly set
         try:
             conf['hardware'][1] = int(conf['hardware'][1])
         except IndexError:
-            conf['hardware'].append(None)
+            conf['hardware'] = conf['hardware'][0].split(',')
+            conf['hardware'].insert(1, None)
     # map cli with configuration file if configuration file is used
     if conf['file'] is not None:
         for threshold in ['fan_thresholds', 'voltage_thresholds', 'current_thresholds', 'watt_thresholds',
@@ -846,9 +847,11 @@ if __name__ == '__main__':
                 config_reader()
                 break
     config_verify()
-    if conf['hardware'] is None:  # check all hardware
+    if conf['hardware'] is None or len(conf['hardware']) > 2: # All hardware / Multi-selection
         exit_code = 0
+        if conf['hardware'] is not None: hw_keys=tuple(conf['hardware'])
         for key in all_hardware.keys():
+          if "hw_keys" not in locals() or key in hw_keys:
             conf['hardware'] = [key, None]
             hw_info = all_hardware[key]
             result, tmp_code = PARSER().main()
@@ -878,3 +881,4 @@ if __name__ == '__main__':
             else:
                 print '%s' % '\n'.join(result)
         sys.exit(exit_code[0])
+
