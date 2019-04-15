@@ -280,6 +280,9 @@ def config_verify():  # check if configurations are properly set
         except IndexError:
             conf['hardware'] = conf['hardware'][0].split(',')
             conf['hardware'].insert(1, None)
+        except ValueError:
+            print >> sys.stderr, "\nWrong parameter for -w\nTry -wFAN | -wFAN#1 | -wFAN,MEM\n"
+            sys.exit(1)
     # map cli with configuration file if configuration file is used
     if conf['file'] is not None:
         for threshold in ['fan_thresholds', 'voltage_thresholds', 'current_thresholds', 'watt_thresholds',
