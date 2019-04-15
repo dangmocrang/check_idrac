@@ -793,7 +793,7 @@ class PARSER:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 try:
-                    round(float(hw[5].split()[-1])/(1024*1024), 2)
+                    hw_5 = round(float(hw[5].split()[-1])/(1024*1024), 2)
                 except ValueError:
                     hw_5 = hw[5]
                 output.append(tmp % (self.hardware[2], hw[0], hw[4].replace('.', ' ').replace('"', ''),
