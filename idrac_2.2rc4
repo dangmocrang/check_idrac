@@ -279,7 +279,7 @@ def config_verify():  # check if configurations are properly set
             conf['hardware'][1] = int(conf['hardware'][1])
         except IndexError:
             conf['hardware'] = conf['hardware'][0].split(',')
-            conf['hardware'].insert(1, None)
+            conf['hardware'].append(None)
         except ValueError:
             print >> sys.stderr, "\nWrong parameter for -w\nTry -wFAN | -wFAN#1 | -wFAN,MEM\n"
             sys.exit(1)
@@ -853,8 +853,9 @@ if __name__ == '__main__':
     if conf['hardware'] is None or len(conf['hardware']) > 2: # All hardware / Multi-selection
         exit_code = 0
         if conf['hardware'] is not None: hw_keys=tuple(conf['hardware'])
+	else: hw_keys=tuple()
         for key in all_hardware.keys():
-          if "hw_keys" not in locals() or key in hw_keys:
+          if not len(hw_keys) or key in hw_keys:
             conf['hardware'] = [key, None]
             hw_info = all_hardware[key]
             result, tmp_code = PARSER().main()
@@ -884,4 +885,3 @@ if __name__ == '__main__':
             else:
                 print '%s' % '\n'.join(result)
         sys.exit(exit_code[0])
-
