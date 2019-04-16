@@ -853,7 +853,7 @@ if __name__ == '__main__':
     if conf['hardware'] is None or len(conf['hardware']) > 2: # All hardware / Multi-selection
         exit_code = 0
         if conf['hardware'] is not None: hw_keys=tuple(conf['hardware'])
-	else: hw_keys=tuple()
+        else: hw_keys=tuple()
         for key in all_hardware.keys():
           if not len(hw_keys) or key in hw_keys:
             conf['hardware'] = [key, None]
