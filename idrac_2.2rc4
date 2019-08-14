@@ -651,6 +651,9 @@ class PARSER:
         output = []
         exit_code = [0, 'OK']
         if self.hardware[2] == 'PDisk':
+            if self.snmp_command == 'snmpget':  # Organize values to match snmpwalk order
+                reorder=[0,1,2,3,4,5,6,9,7,8]
+                hw_dict[1]=[hw_dict[1][i] for i in reorder]
             value_on_alert = [3,7,9]  # raise alert on these value. Mapped with all_hardware as list order.
             # int type for status check, string type for range check
             if self.alert is True:
