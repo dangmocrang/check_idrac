@@ -414,7 +414,10 @@ class PARSER:
         for _ in data:
             if item.search(_):
                 #--debug print 'matched:', _
-                item_order = int(_.split()[0].split('.')[-1])
+                try:
+                  item_order = int(_.split()[0].split('.')[-1])
+                except ValueError: # No given data from snmp. Incorrect MIB?
+                   break
                 item_info = ' '.join(_.split()[1:])
                 if self.hardware[2] == 'PS':
                     if 'voltageProbeReading' in _:
