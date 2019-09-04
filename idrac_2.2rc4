@@ -184,7 +184,7 @@ def cli_reader():
     optp.add_option('--wat-crit', help='output WATT critical thresholds', dest='wat_crit', metavar='MIN,MAX')
     optp.add_option('--pwr-alert', help='power consumption', dest='consume', metavar='WARN,CRIT')
     optp.add_option('--vdisk-bad', help='number of bad block', dest='vdisk', metavar='WARN,CRIT')
-    optp.add_option('--ok', help='ok|online|on|spunup|full|ready|enabled|presence', dest='ok', metavar='STATES')
+    optp.add_option('--ok', help='0|ok|online|on|spunup|full|ready|enabled|presence', dest='ok', metavar='STATES')
     optp.add_option('--warn', help='$ALL$', dest='warn', metavar='STATES')
     optp.add_option('--crit', help='critical|nonRecoverable|fail', dest='crit', metavar='STATES')
     opts, args = optp.parse_args()
@@ -383,7 +383,7 @@ class PARSER:
         status, output = run(snmp_cli)  # query snmp data
         if status != 0:
             if 'Unknown Object Identifier' in output:
-                print 'your MIB may out of dated!'
+                print 'your MIB may be outdated!'
                 print 'error -', output.replace('\n', '. ')
             elif 'Timeout:' in output:
                 print 'SNMP timeout!'
@@ -416,7 +416,7 @@ class PARSER:
                 #--debug print 'matched:', _
                 try:
                   item_order = int(_.split()[0].split('.')[-1])
-                except ValueError: # No given data from snmp. Incorrect MIB?
+                except ValueError: # No snmp data. Incorrect MIB?
                    break
                 item_info = ' '.join(_.split()[1:])
                 if self.hardware[2] == 'PS':
@@ -435,7 +435,7 @@ class PARSER:
                     tmp[item_order].append(item_info)
                 except KeyError:
                     continue
-        # dump blank data to non-exists item, make it compatible with lower idrac 7 firmware version
+        # dump blank data to non-exists item, for pre-idrac7 compatibility
         for t in tmp:
             if len(self.hardware[3].split('|')) > len(tmp[t]):
                 for r in range(len(tmp[t]), len(self.hardware[3].split('|'))):
