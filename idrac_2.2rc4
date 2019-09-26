@@ -170,8 +170,9 @@ def cli_reader():
     optp.add_option('-f', help='configuration file. COMMAND LINE WILL OVERWRITE CONFIGURATION FILE PARAMETERS', dest='cfg', metavar='FILE')
     optp.add_option('-m', help='specific MIB file. Default is load all MIBs', dest='mib', metavar='FILE')
     optp.add_option('-n', '--no-alert', help='always return with exit code 0', action='store_true', dest='no_alert')
-    optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM')
+    optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM|FAN,MEM')
     optp.add_option('-p', help='enable performance data', dest='perf', action='store_true')
+    optp.add_option('-i', help='only display WARN and CRIT, else OK', dest='icinga', action='store_true')
     optp.add_option('--fan-warn', help='FAN rpm warning thresholds', dest='fan_warn', metavar='MIN,MAX')
     optp.add_option('--fan-crit', help='FAN rpm critical thresholds', dest='fan_crit', metavar='MIN,MAX')
     optp.add_option('--temp-warn', help='TEMPERATURE warning thresholds', dest='temp_warn', metavar='MIN,MAX')
@@ -184,7 +185,7 @@ def cli_reader():
     optp.add_option('--wat-crit', help='output WATT critical thresholds', dest='wat_crit', metavar='MIN,MAX')
     optp.add_option('--pwr-alert', help='power consumption', dest='consume', metavar='WARN,CRIT')
     optp.add_option('--vdisk-bad', help='number of bad block', dest='vdisk', metavar='WARN,CRIT')
-    optp.add_option('--ok', help='ok|online|on|spunup|full|ready|enabled|presence', dest='ok', metavar='STATES')
+    optp.add_option('--ok', help='0|ok|online|on|spunup|full|ready|enabled|presence', dest='ok', metavar='STATES')
     optp.add_option('--warn', help='$ALL$', dest='warn', metavar='STATES')
     optp.add_option('--crit', help='critical|nonRecoverable|fail', dest='crit', metavar='STATES')
     opts, args = optp.parse_args()
@@ -211,6 +212,8 @@ def cli_reader():
         if opts.crit: conf['state_crit'] = opts.crit
         if opts.no_alert is True: conf['alert'] = False
         if opts.perf is True: conf['perf'] = True
+        if opts.icinga is True: conf['icinga'] = True
+        else: conf['icinga'] = False
         # parse fan threshold
         conf['fan_thresholds'] = []
         for x in [opts.fan_warn, opts.fan_crit]:
@@ -278,7 +281,11 @@ def config_verify():  # check if configurations are properly set
         try:
             conf['hardware'][1] = int(conf['hardware'][1])
         except IndexError:
+            conf['hardware'] = conf['hardware'][0].split(',')
             conf['hardware'].append(None)
+        except ValueError:
+            print >> sys.stderr, "\nWrong parameter for -w\nTry -wFAN | -wFAN#1 | -wFAN,MEM\n"
+            sys.exit(1)
     # map cli with configuration file if configuration file is used
     if conf['file'] is not None:
         for threshold in ['fan_thresholds', 'voltage_thresholds', 'current_thresholds', 'watt_thresholds',
@@ -379,7 +386,7 @@ class PARSER:
         status, output = run(snmp_cli)  # query snmp data
         if status != 0:
             if 'Unknown Object Identifier' in output:
-                print 'your MIB may out of dated!'
+                print 'your MIB may be outdated!'
                 print 'error -', output.replace('\n', '. ')
             elif 'Timeout:' in output:
                 print 'SNMP timeout!'
@@ -433,7 +440,7 @@ class PARSER:
                     tmp[item_order].append(item_info)
                 except KeyError:
                     continue
-        # dump blank data to non-exists item, make it compatible with lower idrac 7 firmware version
+        # dump blank data to non-exists item, for pre-idrac7 compatibility
         for t in tmp:
             if len(self.hardware[3].split('|')) > len(tmp[t]):
                 for r in range(len(tmp[t]), len(self.hardware[3].split('|'))):
@@ -652,6 +659,9 @@ class PARSER:
         output = []
         exit_code = [0, 'OK']
         if self.hardware[2] == 'PDisk':
+            if self.snmp_command == 'snmpget':  # Organize values to match snmpwalk order
+                reorder=[0,1,2,3,4,5,6,9,7,8]
+                hw_dict[self.order]=[hw_dict[self.order][i] for i in reorder]
             value_on_alert = [3,7,9]  # raise alert on these value. Mapped with all_hardware as list order.
             # int type for status check, string type for range check
             if self.alert is True:
@@ -661,9 +671,10 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                if hw[5] == '(N/A)':
+                try: # All ValueErrors from float are now handled, no need for an "N/A" check.
+                    hw_5 = round(float(hw[5])/1024, 2)
+                except ValueError:
                     hw_5 = hw[5]
-                else: hw_5 = round(float(hw[5])/1024, 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[1].split()[-1].replace('"', ''),
                                      hw_5, hw[3], hw[9], hw[6].replace('HotSpare', '').replace('notASpare', 'no'),
                                      hw[2].replace('"', ''), hw[8].upper(), hw[4].replace('"', ''), hw[7]))
@@ -671,17 +682,18 @@ class PARSER:
             value_on_alert = [1, 2, '3']
             if self.alert is True:
                 hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
-            tmp = '%s: %s RPM - %s/%s%s'
+            tmp = '%s: %s RPM - %s/%s' #Removed the last string because pref_data for "Fan" is added differently.
             for hw in hw_dict.values():
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if self.perf is True and hw[3].split('(')[0]:
-                    perf_data = ' | FAN%s_RPM=%s;;;%s;%s' % (hw[0], hw[3].split('(')[0], conf['fan_thresholds'][2], conf['fan_thresholds'][3])
+                    perf_data = ' FAN%s_RPM=%s;;;%s;%s' % (hw[0], hw[3].split('(')[0], conf['fan_thresholds'][2], conf['fan_thresholds'][3])
                     perf_data = perf_data.replace('none','')
-                else:
-                    perf_data = ''
-                output.append(tmp % (hw[4].replace('"', '').replace(' RPM', ''), hw[3], hw[1], hw[2], perf_data))
+                output.insert(len(output)-1, tmp % (hw[4].replace('"', '').replace(' RPM', ''), hw[3], hw[1], hw[2]))
+                if "perf_data" in locals():
+                    if (len(output)==1): output.append("|")
+                    output[len(output)-1] += perf_data
         elif self.hardware[2] == 'Sensor':
             value_on_alert = [1, 2, '3']  # int type for status check, str type for range check
             if self.alert is True:
@@ -702,9 +714,10 @@ class PARSER:
                 if self.alert is True:
                     output.append(tmp % (hw[4].replace('"', ''), hw[3], hw[1], hw[2], perf_data))
                 else:
-                    if hw[3] == '(N/A)':
+                    try:
+                        hw_3 = round(float(hw[3])/10, 1)
+                    except ValueError:
                         hw_3 = hw[3]
-                    else: hw_3 = round(float(hw[3])/10, 1)
                     output.append(tmp % (hw[4].replace('"', ''), hw_3, hw[1], hw[2], perf_data))
         elif self.hardware[2] == 'CPU':
             value_on_alert = [1, 2]
@@ -746,9 +759,10 @@ class PARSER:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if self.perf is True:
-                    if hw[4] == '(N/A)':
+                    try:
+                        hw_4 = round(float(hw[4])/10, 0)
+                    except ValueError:
                         hw_4 = hw[4]
-                    else: hw_4 = round(float(hw[4])/10, 0)
                     if not hw[3]:
 			hw[3] = 0
                     if not hw[6].split('(')[0]:
@@ -793,9 +807,10 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                if hw[5] == '(N/A)':
+                try:
+                    hw_5 = round(float(hw[5].split()[-1])/(1024*1024), 2)
+                except ValueError:
                     hw_5 = hw[5]
-                else: hw_5 = round(float(hw[5].split()[-1])/(1024*1024), 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[4].replace('.', ' ').replace('"', ''),
                                      hw_5, hw[6].split()[-1], hw[1], hw[2], hw[3].replace('deviceTypeIs', ''),
                                      hw[7].replace('"', ''), hw[8].replace('"', ''),))
@@ -829,9 +844,10 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                if hw[3] == '(N/A)' or hw[3] == '(n/a)':
+                try:
+                    hw_3 = round(float(hw[3])/1024, 2)
+                except ValueError:
                     hw_3 = hw[3]
-                else: hw_3 = round(float(hw[3])/1024, 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[1].replace('"', ''), hw[5], hw[2],
                                      hw[4].replace('r', 'RAID-'), hw_3, hw[6], hw[7].replace('"', '')))
         return output, exit_code
@@ -845,9 +861,12 @@ if __name__ == '__main__':
                 config_reader()
                 break
     config_verify()
-    if conf['hardware'] is None:  # check all hardware
+    if conf['hardware'] is None or len(conf['hardware']) > 2: # All hardware / Multi-selection
         exit_code = 0
+        if conf['hardware'] is not None: hw_keys=tuple(conf['hardware'])
+        else: hw_keys=tuple()
         for key in all_hardware.keys():
+          if not len(hw_keys) or key in hw_keys:
             conf['hardware'] = [key, None]
             hw_info = all_hardware[key]
             result, tmp_code = PARSER().main()
@@ -856,9 +875,16 @@ if __name__ == '__main__':
             elif tmp_code[0] == 1:
                 if exit_code != 2:
                     exit_code = tmp_code[0]
-            print '%s' % key
-            sys.stdout.write('--')
-            print '\n--'.join(result)
+            if conf['icinga'] is True:
+                for line in result:
+                    if "CRITICAL" in line or "(!)" in line:
+                        print(line)
+            else:
+                print '%s' % key
+                sys.stdout.write('--')
+                print '\n--'.join(result)
+        if conf['icinga'] is True and exit_code == 0:
+            print("OK")
         sys.exit(exit_code)
     else:
         not_found = 0
