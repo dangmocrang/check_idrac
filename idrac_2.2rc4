@@ -172,6 +172,7 @@ def cli_reader():
     optp.add_option('-n', '--no-alert', help='always return with exit code 0', action='store_true', dest='no_alert')
     optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM|FAN,MEM')
     optp.add_option('-p', help='enable performance data', dest='perf', action='store_true')
+    optp.add_option('-i', help='only display WARN and CRIT, else OK', dest='icinga', action='store_true')
     optp.add_option('--fan-warn', help='FAN rpm warning thresholds', dest='fan_warn', metavar='MIN,MAX')
     optp.add_option('--fan-crit', help='FAN rpm critical thresholds', dest='fan_crit', metavar='MIN,MAX')
     optp.add_option('--temp-warn', help='TEMPERATURE warning thresholds', dest='temp_warn', metavar='MIN,MAX')
@@ -211,6 +212,8 @@ def cli_reader():
         if opts.crit: conf['state_crit'] = opts.crit
         if opts.no_alert is True: conf['alert'] = False
         if opts.perf is True: conf['perf'] = True
+        if opts.icinga is True: conf['icinga'] = True
+        else: conf['icinga'] = False
         # parse fan threshold
         conf['fan_thresholds'] = []
         for x in [opts.fan_warn, opts.fan_crit]:
@@ -872,9 +875,16 @@ if __name__ == '__main__':
             elif tmp_code[0] == 1:
                 if exit_code != 2:
                     exit_code = tmp_code[0]
-            print '%s' % key
-            sys.stdout.write('--')
-            print '\n--'.join(result)
+            if conf['icinga'] is True:
+                for line in result:
+                    if "CRITICAL" in line or "(!)" in line:
+                        print(line)
+            else:
+                print '%s' % key
+                sys.stdout.write('--')
+                print '\n--'.join(result)
+        if conf['icinga'] is True and exit_code == 0:
+            print("OK")
         sys.exit(exit_code)
     else:
         not_found = 0
