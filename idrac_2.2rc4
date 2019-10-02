@@ -38,6 +38,7 @@ conf = {'snmp_version': None,
         'sensor_thresholds': None,
         'consumption_thresholds': None,
         'vdisk_thresholds': None,
+        'mem_modules': None,
         'host': None}
 
 conf_file = {'snmp_version': None,
@@ -187,6 +188,7 @@ def cli_reader():
     optp.add_option('--ok', help='ok|online|on|spunup|full|ready|enabled|presence', dest='ok', metavar='STATES')
     optp.add_option('--warn', help='$ALL$', dest='warn', metavar='STATES')
     optp.add_option('--crit', help='critical|nonRecoverable|fail', dest='crit', metavar='STATES')
+    optp.add_option('--mem-modules', help='number of installed memory modules', dest='mem_modules', metavar='NUMBER')
     opts, args = optp.parse_args()
     if opts.host is None:
         print 'no IP address specified!'
@@ -211,6 +213,7 @@ def cli_reader():
         if opts.crit: conf['state_crit'] = opts.crit
         if opts.no_alert is True: conf['alert'] = False
         if opts.perf is True: conf['perf'] = True
+        if opts.mem_modules: conf['mem_modules'] = opts.mem_modules
         # parse fan threshold
         conf['fan_thresholds'] = []
         for x in [opts.fan_warn, opts.fan_crit]:
@@ -799,6 +802,20 @@ class PARSER:
                 output.append(tmp % (self.hardware[2], hw[0], hw[4].replace('.', ' ').replace('"', ''),
                                      hw_5, hw[6].split()[-1], hw[1], hw[2], hw[3].replace('deviceTypeIs', ''),
                                      hw[7].replace('"', ''), hw[8].replace('"', ''),))
+            
+            # Check number of installed memory modules
+            if conf['mem_modules'] and int(conf['mem_modules']) != len(hw_dict):
+                detect_diff = int(conf['mem_modules']) - len(hw_dict)
+
+                if detect_diff <= -1:
+                    output.append (self.hardware[2] + ': Number of memory modules not correct!')
+
+                elif detect_diff == 1:
+                    output.append (self.hardware[2] + ': 1 memory module not detected!!!')
+
+                elif detect_diff >= 1:
+                    output.append (self.hardware[2] + ': ' + str(detect_diff) + ' memory modules not detected!!!')
+
         elif self.hardware[2] == 'Battery':
             value_on_alert = [1, 2, 3]
             if self.alert is True:
