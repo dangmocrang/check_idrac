@@ -28,6 +28,7 @@ conf = {'snmp_version': None,
         'state_crit': None,
         'hardware': None,
         'alert': True,
+        'quiet': False,
         'mib': None,
         'file': None,
         'perf': False,
@@ -64,6 +65,16 @@ conf_file = {'snmp_version': None,
 all_hardware = {
     #'DEV': ['SNMP name', 'Description/Additional SNMP name', 'Full name', [value/search pattern]]
     #Script will first read SNMP name to get snmp data form device, then use value part to search and parse info
+    'SERVER': ['chassisInformationGroup', '',
+	      'Server', r'chassisIndexChassisInformation\.|'
+                       r'chassisSystemName\.|'
+                       r'chassisStatus\.|'
+                       r'chassisName\.|'
+                       r'chassisServiceTagName\.|'
+                       r'firmwareVersionName\.|'
+                       r'systemBIOSReleaseDateName\.|'
+                       r'systemBIOSVersionName\.|'
+                       r'chassisModelTypeName\.'],
     'GLOBAL': ['systemStateGlobalSystemStatus', '',
                 'Global', r'systemStateGlobalSystemStatus\.|' ],
     'MEM': ['memoryDeviceTable', '1.3.6.1.4.1.674.10892.5.4.1100.50',
@@ -171,7 +182,8 @@ def cli_reader():
     optp.add_option('-f', help='configuration file. COMMAND LINE WILL OVERWRITE CONFIGURATION FILE PARAMETERS', dest='cfg', metavar='FILE')
     optp.add_option('-m', help='specific MIB file. Default is load all MIBs', dest='mib', metavar='FILE')
     optp.add_option('-n', '--no-alert', help='always return with exit code 0', action='store_true', dest='no_alert')
-    optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM')
+    optp.add_option('-q', '--quiet', help='only report short system info or warnings and errors', action='store_true', dest='quiet')
+    optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: SERVER, DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM')
     optp.add_option('-p', help='enable performance data', dest='perf', action='store_true')
     optp.add_option('--fan-warn', help='FAN rpm warning thresholds', dest='fan_warn', metavar='MIN,MAX')
     optp.add_option('--fan-crit', help='FAN rpm critical thresholds', dest='fan_crit', metavar='MIN,MAX')
@@ -212,6 +224,7 @@ def cli_reader():
         if opts.warn: conf['state_warn'] = opts.warn
         if opts.crit: conf['state_crit'] = opts.crit
         if opts.no_alert is True: conf['alert'] = False
+        if opts.quiet is True: conf['quiet'] = True
         if opts.perf is True: conf['perf'] = True
         if opts.mem_modules: conf['mem_modules'] = opts.mem_modules
         # parse fan threshold
@@ -411,8 +424,10 @@ class PARSER:
     def classifier(self, data, tmp):  # classify snmp data to it's specific type
         item = re.compile(self.hardware[3])
         for _ in data:
+	    print _
             if item.search(_):
                 #--debug print 'matched:', _
+                print 'matched:', _
                 try:
                     item_order = int(_.split()[0].split('.')[-1])
                     item_info = ' '.join(_.split()[1:])
@@ -648,14 +663,17 @@ class PARSER:
             #--END OF TRANSLATOR--#
         #--debug print '\n'.join(snmp_data)
         #--debug print hw_dict
+        print '\n'.join(snmp_data)
+        print hw_dict
         hw_dict = self.classifier(snmp_data, hw_dict)  # classify data
+        print hw_dict
         #--debug print hw_dict
         #--re-format output to suit hw type. Power is the most messed part!
         output = []
         warnings = []
         criticals = []
         if self.hardware[2] == 'PDisk':
-            value_on_alert = [6] #[3,7,9]  # raise alert on these value. Mapped with all_hardware as list order.
+            value_on_alert = [3,7,9]  # raise alert on these value. Mapped with all_hardware as list order.
             # int type for status check, string type for range check
             tmp = '%s %s (%s) %s GB: %s, PowerStat: %s, HotSpare: %s [%s, %s, S/N: %s] isFailing: %s'
             for hw in hw_dict.values():
@@ -978,61 +996,56 @@ if __name__ == '__main__':
                 config_reader()
                 break
     config_verify()
-    if conf['hardware'] is None:  # check all hardware
-        exit_code = 0
-        warnings = []
-        criticals = []
-        results = []
-        system = ''
-        for key in all_hardware.keys():
-            conf['hardware'] = [key, None]
-            hw_info = all_hardware[key]
+    
+    if conf['hardware'] is None:
+        to_check = all_hardware.keys()
+        item = None
+    else:
+	if not conf['hardware'][0] in all_hardware.keys():
+		print 'sorry, hardware not supported!'
+                sys.exit(3)
+	
+	to_check = [conf['hardware'][0]]
+	item = conf['hardware'][1]
+	
+    exit_code = 0
+    warnings = []
+    criticals = []
+    results = []
+    system = ''
+    
+    for key in to_check:
+            conf['hardware'] = [key, item]
             
             block_results, block_warnings, block_criticals = PARSER().main()
 
             warnings.extend (block_warnings)
             criticals.extend (block_criticals)
-        
-        results.append (key)
-        results.extend (block_results)
-        results.append ("--")
+            
+            results.append (key)
+            results.extend (block_results)
+            results.append ("--")
 
-        if key == 'SERVER':
-            system = block_results[0]
+            if key == 'SERVER':
+                system = block_results[0]
 
-        if (criticals):
+    if (criticals):
     	    exit_code = 2
     	    text = "CRITICAL: "
-    	elif (warnings):
+    elif (warnings):
     	    exit_code = 1
     	    text = "WARNING: "
-    	else:
+    else:
     	    exit_code = 0
     	    text = system
 
-	criticals.extend (warnings)
-	text += ", ".join (criticals)
-	print text, '\n'
+    criticals.extend (warnings)
+    text += ", ".join (criticals)
+    print text
 
+    if not conf['quiet']:
+	print
 	for line in results:
-	    print line
+		print line
 
-        sys.exit(exit_code)
-
-    else:
-        not_found = 0
-        for key in all_hardware.keys():
-            if conf['hardware'][0] != key:
-                not_found += 1
-            if not_found == len(all_hardware.keys()):
-                print 'sorry, hardware not supported!'
-                sys.exit(1)
-        result, exit_code = PARSER().main()
-        if conf['hardware'][1] is None:
-            print '\n'.join(result)
-        else:
-            if conf['alert'] is True:
-                print '%s - %s' % (exit_code[1], '\n'.join(result))
-            else:
-                print '%s' % '\n'.join(result)
-        sys.exit(exit_code[0])
+    sys.exit(exit_code)
