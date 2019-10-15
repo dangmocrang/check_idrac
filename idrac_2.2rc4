@@ -135,9 +135,9 @@ all_hardware = {
                       r'physicalDiskSerialNo\.|'
                       r'physicalDiskCapacityInMB\.|'
                       r'physicalDiskSpareState\.|'
+                      r'physicalDiskSmartAlertIndication\.|'
                       r'physicalDiskMediaType\.|'
-                      r'physicalDiskPowerState\.|'
-                      r'physicalDiskSmartAlertIndication\.'],
+                      r'physicalDiskPowerState\.'],
     'VDISK': ['virtualDiskTable', 'Virtual Disk',
               'VDisk', r'virtualDiskNumber\.|'
                        r'virtualDiskName\.|'
@@ -424,10 +424,8 @@ class PARSER:
     def classifier(self, data, tmp):  # classify snmp data to it's specific type
         item = re.compile(self.hardware[3])
         for _ in data:
-	    print _
             if item.search(_):
                 #--debug print 'matched:', _
-                print 'matched:', _
                 try:
                     item_order = int(_.split()[0].split('.')[-1])
                     item_info = ' '.join(_.split()[1:])
@@ -663,10 +661,7 @@ class PARSER:
             #--END OF TRANSLATOR--#
         #--debug print '\n'.join(snmp_data)
         #--debug print hw_dict
-        print '\n'.join(snmp_data)
-        print hw_dict
         hw_dict = self.classifier(snmp_data, hw_dict)  # classify data
-        print hw_dict
         #--debug print hw_dict
         #--re-format output to suit hw type. Power is the most messed part!
         output = []
@@ -1041,10 +1036,12 @@ if __name__ == '__main__':
 
     criticals.extend (warnings)
     text += ", ".join (criticals)
-    print text
+    if text:
+	    print text
 
     if not conf['quiet']:
-	print
+	if text:
+		print
 	for line in results:
 		print line
 
