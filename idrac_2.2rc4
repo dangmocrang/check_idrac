@@ -761,7 +761,7 @@ class PARSER:
                            criticals.append (text)
                            
                 if self.perf is True and hw[3] and hw[3] != '(N/A)':
-                    perf_data = ' | %s=%s;;;%s;%s' \
+                    perf_data = " | '%s'=%s;;;%s;%s" \
                                 % (hw[4].replace('"', ''), hw[3], conf['sensor_thresholds'][2], conf['sensor_thresholds'][3])
                     perf_data = perf_data.replace('none','')
                 else:
@@ -1039,10 +1039,14 @@ if __name__ == '__main__':
     if text:
 	    print text
 
-    if not conf['quiet']:
-	if text:
-		print
-	for line in results:
+    if text and not conf['quiet']:
+	print
+    for line in results:
+	if conf['quiet']:
+		if '|' in line:
+			line = '|' + line.split('|')[-1]
+			print line
+	else:
 		print line
 
     sys.exit(exit_code)
