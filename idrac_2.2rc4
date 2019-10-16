@@ -709,7 +709,6 @@ class PARSER:
             #hw_dict = {1: ['1', 'warn', '"Main System Chassis"', '"PowerEdge M630"', '"DT578C2"', '"dell-o2g-04"', '"2.30.30.30"']}
             value_on_alert = [1]
             tmp = '%s - %s: %s, S/N: %s, Firmware: %s, Bios: %s, %s'
-            tmp2 = '%s: %s'
             for hw in hw_dict.values():
                 if self.alert is True:
                     hw, exit_code = self.raise_alert(hw, value_on_alert)
@@ -717,7 +716,7 @@ class PARSER:
                         v = int(v)
                         hw[v] = hw[v].upper()
                     if (exit_code[0] > 0):
-                        text = tmp2 % (hw[2].replace('"', ''), hw[1])
+                        text = tmp % (hw[1], hw[2].replace('"', ''), hw[3].replace('"', '\''), hw[4].replace('"', '\''), hw[8].replace('"', '\''), hw[7].replace('"', '\''), hw[5].replace('"', '\''))
                         if (exit_code[0] == 1):
                             warnings.append (text)
                         elif (exit_code[0] == 2):
@@ -726,8 +725,7 @@ class PARSER:
 
         elif self.hardware[2] == 'Fan':
             value_on_alert = [1, 2, '3']
-            tmp = '%s: %s RPM - %s/%s%s'
-            tmp2 = '%s: %s/%s'
+            tmp = '%s: %s RPM - %s/%s'
             for hw in hw_dict.values():
                 if self.alert is True:
                     hw, exit_code = self.raise_alert(hw, value_on_alert)
@@ -735,7 +733,7 @@ class PARSER:
                         v = int(v)
                         hw[v] = hw[v].upper()
                     if (exit_code[0] > 0):
-                        text = tmp2 % (hw[4].replace('"', '').replace(' RPM', ''), hw[1], hw[2])
+                        text = tmp % (hw[4].replace('"', '').replace(' RPM', ''), hw[3], hw[1], hw[2])
                         if (exit_code[0] == 1):
                             warnings.append (text)
                         elif (exit_code[0] == 2):
@@ -746,12 +744,11 @@ class PARSER:
                     perf_data = perf_data.replace('none','')
                 else:
                     perf_data = ''
-                output.append(tmp % (hw[4].replace('"', '').replace(' RPM', ''), hw[3], hw[1], hw[2], perf_data))
+                output.append(tmp % (hw[4].replace('"', '').replace(' RPM', ''), hw[3], hw[1], hw[2]) + perf_data)
 
         elif self.hardware[2] == 'Sensor':
             value_on_alert = [1, 2, '3']  # int type for status check, str type for range check
-            tmp = '%s: %s C %s/%s%s'
-            tmp2 = '%s: %s C %s/%s'
+            tmp = '%s: %s C %s/%s'
             for hw in hw_dict.values():
                 if self.alert is True:
                     hw, exit_code = self.raise_alert(hw, value_on_alert)
@@ -759,7 +756,7 @@ class PARSER:
                         v = int(v)
                         hw[v] = hw[v].upper()
                     if (exit_code[0] > 0):
-                        text = tmp2 % (hw[4].replace('"', ''), hw[3], hw[1], hw[2])
+                        text = tmp % (hw[4].replace('"', ''), hw[3], hw[1], hw[2])
                         if (exit_code[0] == 1):
                            warnings.append (text)
                         elif (exit_code[0] == 2):
@@ -772,17 +769,16 @@ class PARSER:
                 else:
                     perf_data = ''
                 if self.alert is True:
-                    output.append(tmp % (hw[4].replace('"', ''), hw[3], hw[1], hw[2], perf_data))
+                    output.append(tmp % (hw[4].replace('"', ''), hw[3], hw[1], hw[2]) + perf_data)
                 else:
                     if hw[3] == '(N/A)':
                         hw_3 = hw[3]
                     else: hw_3 = round(float(hw[3])/10, 1)
-                    output.append(tmp % (hw[4].replace('"', ''), hw_3, hw[1], hw[2], perf_data))
+                    output.append(tmp % (hw[4].replace('"', ''), hw_3, hw[1], hw[2]) + perf_data)
 
         elif self.hardware[2] == 'CPU':
             value_on_alert = [1, 2]
             tmp = '%s %s (%s cores/%s threads): %s/%s [%s]'
-            tmp2 = '%s %s %s/%s'
             for hw in hw_dict.values():
                 if self.alert is True:
                     hw, exit_code = self.raise_alert(hw, value_on_alert)
@@ -790,7 +786,8 @@ class PARSER:
                         v = int(v)
                         hw[v] = hw[v].upper()
                     if (exit_code[0] > 0):
-                        text = tmp2 % (self.hardware[2], hw[0], hw[1], hw[2])
+                        text = tmp % (self.hardware[2], hw[0], hw[3].split()[-1],
+                                     hw[4].split()[-1], hw[1], hw[2], hw[5].replace('"', ''))
                         if (exit_code[0] == 1):
                             warnings.append (text)
                         elif (exit_code[0] == 2):
@@ -826,23 +823,20 @@ class PARSER:
         
         elif self.hardware[2] == 'PS':
             value_on_alert = [1, '2', '6', '5']
+            tmp = '%s %s: %s, Volt I/O: %s V/%s V, Current: %s A, Watt I/O: %s W/%s W'
             for hw in hw_dict.values():
                 if self.alert is True:
                     hw, exit_code = self.raise_alert(hw, value_on_alert)
-                    tmp = '%s %s: %s, Volt I/O: %s V/%s V, Current: %s A, Watt I/O: %s W/%s W%s'
-                    tmp2 = '%s %s: %s'
                     for v in value_on_alert:
                         v = int(v)
                         hw[v] = hw[v].upper()
                     if (exit_code[0] > 0):
-                        text = tmp2 % (self.hardware[2], hw[0], hw[1])
+                        text = tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[6], hw[5], hw_4, hw[2])
                         if (exit_code[0] == 1):
                             warnings.append (text)
                         elif (exit_code[0] == 2):
                             criticals.append (text)
                             
-                else:
-                    tmp = '%s %s: %s, Volt I/O: %s V/%s V, Current: %s A, Watt I/O: %s W/%s W'
                 
                 if self.perf is True:
                     if hw[4] == '(N/A)':
@@ -868,7 +862,7 @@ class PARSER:
                     if hw[4] == '(N/A)':
                         hw_4 = hw[4]
                     else: hw_4 = float(hw[4])/10
-                    output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[6], hw[5], hw_4, hw[2], perf_data))
+                    output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[6], hw[5], hw_4, hw[2]) + perf_data)
                 else:
                     if hw[4] == '(N/A)':
                         hw_4 = hw[4]
@@ -888,7 +882,6 @@ class PARSER:
             value_on_alert = [1, 2]
             #--debug print hw_dict
             tmp = '%s %s (%s) %s GB/%s MHz: %s/%s [%s, %s, S/N: %s]'
-            tmp2 = '%s: %s/%s'
             for hw in hw_dict.values():
                 if self.alert is True:
                     hw, exit_code = self.raise_alert(hw, value_on_alert)
@@ -896,7 +889,9 @@ class PARSER:
                         v = int(v)
                         hw[v] = hw[v].upper()
                     if (exit_code[0] > 0):
-                        text = tmp2 % (hw[4].replace('.', ' ').replace('"', ''), hw[1], hw[2])
+                        text = tmp % (self.hardware[2], hw[0], hw[4].replace('.', ' ').replace('"', ''),
+                                     hw_5, hw[6].split()[-1], hw[1], hw[2], hw[3].replace('deviceTypeIs', ''),
+                                     hw[7].replace('"', ''), hw[8].replace('"', ''),)
                         if (exit_code[0] == 1):
                             warnings.append (text)
                         elif (exit_code[0] == 2):
@@ -925,7 +920,6 @@ class PARSER:
         elif self.hardware[2] == 'Battery':
             value_on_alert = [1, 2, 3]
             tmp = '%s: %s/%s [%s]'
-            tmp2 = '%s : %s %s'
             for hw in hw_dict.values():
                 if self.alert is True:
                     hw, exit_code = self.raise_alert(hw, value_on_alert)
@@ -933,7 +927,7 @@ class PARSER:
                         v = int(v)
                         hw[v] = hw[v].upper()
                     if (exit_code[0] > 0):
-                        text = tmp2 % (hw[4].replace('"', ''), hw[1], hw[2])
+                        text = tmp % (hw[4].replace('"', ''), hw[1], hw[2], hw[3])
                         if (exit_code[0] == 1):
                             warnings.append (text)
                         elif (exit_code[0] == 2):
@@ -962,7 +956,6 @@ class PARSER:
         elif self.hardware[2] == 'VDisk':
             value_on_alert = [2, 5, '6']
             tmp = '%s %s (%s): %s/%s, %s (%s GB), BadBlock: %s [%s]'
-            tmp2 = '%s %s (%s): %s/%s, %s (%s GB), BadBlock: %s [%s]'
             for hw in hw_dict.values():
                 if self.alert is True:
                     hw, exit_code = self.raise_alert(hw, value_on_alert)
@@ -973,7 +966,7 @@ class PARSER:
                         hw_3 = hw[3]
                     else: hw_3 = round(float(hw[3])/1024, 2)
                     if (exit_code[0] > 0):
-                        text = tmp2 % (self.hardware[2], hw[0], hw[1].replace('"', ''), hw[5], hw[2], hw[4].replace('r', 'RAID-'), hw_3, hw[6], hw[7].replace('"', ''))
+                        text = tmp % (self.hardware[2], hw[0], hw[1].replace('"', ''), hw[5], hw[2], hw[4].replace('r', 'RAID-'), hw_3, hw[6], hw[7].replace('"', ''))
                         if (exit_code[0] == 1):
                             warnings.append (text)
                         elif (exit_code[0] == 2):
