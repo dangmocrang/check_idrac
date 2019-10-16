@@ -29,6 +29,7 @@ conf = {'snmp_version': None,
         'hardware': None,
         'alert': True,
         'quiet': False,
+        'debug': False,
         'mib': None,
         'file': None,
         'perf': False,
@@ -183,6 +184,7 @@ def cli_reader():
     optp.add_option('-m', help='specific MIB file. Default is load all MIBs', dest='mib', metavar='FILE')
     optp.add_option('-n', '--no-alert', help='always return with exit code 0', action='store_true', dest='no_alert')
     optp.add_option('-q', '--quiet', help='only report short system info or warnings and errors', action='store_true', dest='quiet')
+    optp.add_option('-d', '--debug', help='debug output', action='store_true', dest='debug')
     optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: SERVER, DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM')
     optp.add_option('-p', help='enable performance data', dest='perf', action='store_true')
     optp.add_option('--fan-warn', help='FAN rpm warning thresholds', dest='fan_warn', metavar='MIN,MAX')
@@ -225,6 +227,7 @@ def cli_reader():
         if opts.crit: conf['state_crit'] = opts.crit
         if opts.no_alert is True: conf['alert'] = False
         if opts.quiet is True: conf['quiet'] = True
+        if opts.debug is True: conf['debug'] = True
         if opts.perf is True: conf['perf'] = True
         if opts.mem_modules: conf['mem_modules'] = opts.mem_modules
         # parse fan threshold
@@ -425,7 +428,8 @@ class PARSER:
         item = re.compile(self.hardware[3])
         for _ in data:
             if item.search(_):
-                #--debug print 'matched:', _
+                if conf['debug']:
+			print 'matched:', _
                 try:
                     item_order = int(_.split()[0].split('.')[-1])
                     item_info = ' '.join(_.split()[1:])
@@ -662,7 +666,8 @@ class PARSER:
         #--debug print '\n'.join(snmp_data)
         #--debug print hw_dict
         hw_dict = self.classifier(snmp_data, hw_dict)  # classify data
-        #--debug print hw_dict
+        if conf['debug']:
+		print hw_dict
         #--re-format output to suit hw type. Power is the most messed part!
         output = []
         warnings = []
@@ -796,8 +801,7 @@ class PARSER:
 
         elif self.hardware[2] == 'PU':
             value_on_alert = [1, 2, 3, '4']
-            tmp = '%s %s: %s/%s, RedundancyStatus: %s, SystemBoard Pwr Consumption: %s W%s'
-            tmp2 = '%s %s: %s/%s'#, RedundancyStatus: %s'
+            tmp = '%s %s: %s/%s, RedundancyStatus: %s, SystemBoard Pwr Consumption: %s W'
             for hw in hw_dict.values():
                 if self.alert is True:
                     hw, exit_code = self.raise_alert(hw, value_on_alert)
@@ -807,7 +811,7 @@ class PARSER:
                         v = int(v)
                         hw[v] = hw[v].upper()
                     if (exit_code[0] > 0):
-                        text = tmp2 % (self.hardware[2], hw[0], hw[1], hw[3], hw[2])
+                        text = tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[2], hw[4])
                         if (exit_code[0] == 1):
                             warnings.append (text)
                         elif (exit_code[0] == 2):
@@ -818,7 +822,7 @@ class PARSER:
                     perf_data = perf_data.replace('none','')
                 else:
                     perf_data = ''
-                output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[2], hw[4], perf_data))
+                output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[2], hw[4]) + perf_data)
         
         elif self.hardware[2] == 'PS':
             value_on_alert = [1, '2', '6', '5']
