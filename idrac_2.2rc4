@@ -449,6 +449,10 @@ class PARSER:
                                 item_info = ' '.join(x.split()[1:])
                                 item_order = 1
                                 break
+		elif self.hardware[2] == 'PDisk':
+		    if 'physicalDiskSmartAlertIndication' in _:
+			item_info = ['ok', 'failing'][int(item_info)]
+
                 try:
                     tmp[item_order].append(item_info)
                 except KeyError:
@@ -679,6 +683,8 @@ class PARSER:
             for hw in hw_dict.values():
                 if self.alert is True:
                     hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    print hw
+                    print exit_code
                     for v in value_on_alert:
                         v = int(v)
                         hw[v] = hw[v].upper()
