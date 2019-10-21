@@ -452,7 +452,12 @@ class PARSER:
 		elif self.hardware[2] == 'PDisk':
 		    if 'physicalDiskSmartAlertIndication' in _:
 			item_info = ['ok', 'failing'][int(item_info)]
-
+		
+		# handle special case of PERC mini controllers without battery
+		elif self.hardware[2] == 'Battery':
+		    if 'systemBatteryReading' in _:
+			if item_info == '-2147483648':
+				item_info = '(n/a)'
                 try:
                     tmp[item_order].append(item_info)
                 except KeyError:
