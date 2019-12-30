@@ -28,6 +28,8 @@ conf = {'snmp_version': None,
         'state_crit': None,
         'hardware': None,
         'alert': True,
+        'quiet': False,
+        'debug': False,
         'mib': None,
         'file': None,
         'perf': False,
@@ -64,6 +66,16 @@ conf_file = {'snmp_version': None,
 all_hardware = {
     #'DEV': ['SNMP name', 'Description/Additional SNMP name', 'Full name', [value/search pattern]]
     #Script will first read SNMP name to get snmp data form device, then use value part to search and parse info
+    'SERVER': ['chassisInformationGroup', '',
+	      'Server', r'chassisIndexChassisInformation\.|'
+                       r'chassisSystemName\.|'
+                       r'chassisStatus\.|'
+                       r'chassisName\.|'
+                       r'chassisServiceTagName\.|'
+                       r'firmwareVersionName\.|'
+                       r'systemBIOSReleaseDateName\.|'
+                       r'systemBIOSVersionName\.|'
+                       r'chassisModelTypeName\.'],
     'GLOBAL': ['systemStateGlobalSystemStatus', '',
                 'Global', r'systemStateGlobalSystemStatus\.|' ],
     'MEM': ['memoryDeviceTable', '1.3.6.1.4.1.674.10892.5.4.1100.50',
@@ -124,9 +136,9 @@ all_hardware = {
                       r'physicalDiskSerialNo\.|'
                       r'physicalDiskCapacityInMB\.|'
                       r'physicalDiskSpareState\.|'
+                      r'physicalDiskSmartAlertIndication\.|'
                       r'physicalDiskMediaType\.|'
-                      r'physicalDiskPowerState\.|'
-                      r'physicalDiskSmartAlertIndication\.'],
+                      r'physicalDiskPowerState\.'],
     'VDISK': ['virtualDiskTable', 'Virtual Disk',
               'VDisk', r'virtualDiskNumber\.|'
                        r'virtualDiskName\.|'
@@ -171,7 +183,9 @@ def cli_reader():
     optp.add_option('-f', help='configuration file. COMMAND LINE WILL OVERWRITE CONFIGURATION FILE PARAMETERS', dest='cfg', metavar='FILE')
     optp.add_option('-m', help='specific MIB file. Default is load all MIBs', dest='mib', metavar='FILE')
     optp.add_option('-n', '--no-alert', help='always return with exit code 0', action='store_true', dest='no_alert')
-    optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM')
+    optp.add_option('-q', '--quiet', help='only report short system info or warnings and errors', action='store_true', dest='quiet')
+    optp.add_option('-d', '--debug', help='debug output', action='store_true', dest='debug')
+    optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: SERVER, DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM')
     optp.add_option('-p', help='enable performance data', dest='perf', action='store_true')
     optp.add_option('--fan-warn', help='FAN rpm warning thresholds', dest='fan_warn', metavar='MIN,MAX')
     optp.add_option('--fan-crit', help='FAN rpm critical thresholds', dest='fan_crit', metavar='MIN,MAX')
@@ -212,6 +226,8 @@ def cli_reader():
         if opts.warn: conf['state_warn'] = opts.warn
         if opts.crit: conf['state_crit'] = opts.crit
         if opts.no_alert is True: conf['alert'] = False
+        if opts.quiet is True: conf['quiet'] = True
+        if opts.debug is True: conf['debug'] = True
         if opts.perf is True: conf['perf'] = True
         if opts.mem_modules: conf['mem_modules'] = opts.mem_modules
         # parse fan threshold
@@ -412,7 +428,8 @@ class PARSER:
         item = re.compile(self.hardware[3])
         for _ in data:
             if item.search(_):
-                #--debug print 'matched:', _
+                if conf['debug']:
+			print 'matched:', _
                 try:
                     item_order = int(_.split()[0].split('.')[-1])
                     item_info = ' '.join(_.split()[1:])
@@ -432,6 +449,15 @@ class PARSER:
                                 item_info = ' '.join(x.split()[1:])
                                 item_order = 1
                                 break
+		elif self.hardware[2] == 'PDisk':
+		    if 'physicalDiskSmartAlertIndication' in _:
+			item_info = ['ok', 'failing'][int(item_info)]
+		
+		# handle special case of PERC mini controllers without battery
+		elif self.hardware[2] == 'Battery':
+		    if 'systemBatteryReading' in _:
+			if item_info == '-2147483648':
+				item_info = '(n/a)'
                 try:
                     tmp[item_order].append(item_info)
                 except KeyError:
@@ -443,167 +469,166 @@ class PARSER:
                     tmp[t].append('(n/a)')
         return tmp
 
-    def raise_alert(self, tmp, value_on_alert):
+    def raise_alert(self, hw, value_on_alert):
         code = {0: [0, 'OK'],
                 1: [1, 'WARN'],
                 2: [2, 'CRIT'],
                 3: [3, 'UNKNOWN']}
         alert = 0
-        for key in tmp.keys():
-            for stat in value_on_alert:  # check status of hw
-                if tmp[key][int(stat)] == '(n/a)':
-                    continue
-                if type(stat) == int:
-                    if conf['state_warn'] == '$ALL$':
-                        #debug print 'WARN ALL'
-                        if re.match(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
-                            continue
-                        elif re.match(conf['state_crit'], tmp[key][stat], re.IGNORECASE):
-                            tmp[key][stat] += '(!!)'  # more useful with check_mk frontend
-                            alert = 2
-                        else:
-                            tmp[key][stat] += '(!)'
-                            if alert != 2: alert = 1
-                    elif conf['state_crit'] == '$ALL$':
-                        #debug print 'CRIT ALL'
-                        if re.match(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
-                            continue
-                        elif re.match(conf['state_warn'], tmp[key][stat], re.IGNORECASE):
-                            tmp[key][stat] += '(!)'
-                            if alert != 2: alert = 1
-                        else:
-                            tmp[key][stat] += '(!!)'
-                            alert = 2
+        for stat in value_on_alert:  # check status of hw
+            if hw[int(stat)] == '(n/a)':
+                continue
+            if type(stat) == int:
+                if conf['state_warn'] == '$ALL$':
+                    #debug print 'WARN ALL'
+                    if re.match(conf['state_ok'], hw[stat], re.IGNORECASE):
+                        continue
+                    elif re.match(conf['state_crit'], hw[stat], re.IGNORECASE):
+                        hw[stat] += '(!!)'  # more useful with check_mk frontend
+                        alert = 2
                     else:
-                        #debug print 'NO ALL'
-                        if re.match(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
-                            continue
-                        elif re.match(conf['state_warn'], tmp[key][stat], re.IGNORECASE):
-                            tmp[key][stat] += '(!)'
-                            if alert != 2: alert = 1
-                        elif re.match(conf['state_crit'], tmp[key][stat], re.IGNORECASE):
-                            tmp[key][stat] += '(!!)'
-                            alert = 2
-                        else:
-                            tmp[key][stat] += '(?)'
-                            if alert != 2 and alert != 1: alert = 3
+                        hw[stat] += '(!)'
+                        if alert != 2: alert = 1
+                elif conf['state_crit'] == '$ALL$':
+                    #debug print 'CRIT ALL'
+                    if re.match(conf['state_ok'], hw[stat], re.IGNORECASE):
+                        continue
+                    elif re.match(conf['state_warn'], hw[stat], re.IGNORECASE):
+                        hw[stat] += '(!)'
+                        if alert != 2: alert = 1
+                    else:
+                        hw[stat] += '(!!)'
+                        alert = 2
                 else:
-                    stat_t = int(stat)
-                    if self.hardware[2] == 'Fan':
-                        if conf['fan_thresholds'][2] != 'none':
-                            if int(tmp[key][stat_t].strip('(!)')) <= conf['fan_thresholds'][2]:
-                                tmp[key][stat_t] += '(!!)'
+                    #debug print 'NO ALL'
+                    if re.match(conf['state_ok'], hw[stat], re.IGNORECASE):
+                        continue
+                    elif re.match(conf['state_warn'], hw[stat], re.IGNORECASE):
+                        hw[stat] += '(!)'
+                        if alert != 2: alert = 1
+                    elif re.match(conf['state_crit'], hw[stat], re.IGNORECASE):
+                        hw[stat] += '(!!)'
+                        alert = 2
+                    else:
+                        hw[stat] += '(?)'
+                        if alert != 2 and alert != 1: alert = 3
+            else:
+                stat_t = int(stat)
+                if self.hardware[2] == 'Fan':
+                    if conf['fan_thresholds'][2] != 'none':
+                        if int(hw[stat_t].strip('(!)')) <= conf['fan_thresholds'][2]:
+                            hw[stat_t] += '(!!)'
+                            alert = 2
+                    if conf['fan_thresholds'][3] != 'none':
+                        if int(hw[stat_t].strip('(!)')) >= conf['fan_thresholds'][3]:
+                            hw[stat_t] += '(!!)'
+                            alert = 2
+                    if conf['fan_thresholds'][0] != 'none':
+                        if int(hw[stat_t].strip('(!)')) <= conf['fan_thresholds'][0]:
+                            hw[stat_t] += '(!)'
+                            if alert != 2: alert = 1
+                    if conf['fan_thresholds'][1] != 'none':
+                        if int(hw[stat_t].strip('(!)')) >= conf['fan_thresholds'][1]:
+                            hw[stat_t] += '(!)'
+                            if alert != 2: alert = 1
+                elif self.hardware[2] == 'PS':
+                    if stat_t == 6:
+                        hw[stat_t] = float(hw[stat_t].strip('(!)'))/1000
+                        hw[stat_t] = '%.0f' % hw[stat_t]
+                        if conf['voltage_thresholds'][3] != 'none':
+                            if float(hw[stat_t].strip('(!)')) >= conf['voltage_thresholds'][3]:
+                                hw[stat_t] += '(!!)'
                                 alert = 2
-                        if conf['fan_thresholds'][3] != 'none':
-                            if int(tmp[key][stat_t].strip('(!)')) >= conf['fan_thresholds'][3]:
-                                tmp[key][stat_t] += '(!!)'
+                        if conf['voltage_thresholds'][2] != 'none':
+                            if float(hw[stat_t].strip('(!)')) <= conf['voltage_thresholds'][2]:
+                                hw[stat_t] += '(!!)'
                                 alert = 2
-                        if conf['fan_thresholds'][0] != 'none':
-                            if int(tmp[key][stat_t].strip('(!)')) <= conf['fan_thresholds'][0]:
-                                tmp[key][stat_t] += '(!)'
+                        if conf['voltage_thresholds'][1] != 'none':
+                            if float(hw[stat_t].strip('(!)')) >= conf['voltage_thresholds'][1]:
+                                hw[stat_t] += '(!)'
                                 if alert != 2: alert = 1
-                        if conf['fan_thresholds'][1] != 'none':
-                            if int(tmp[key][stat_t].strip('(!)')) >= conf['fan_thresholds'][1]:
-                                tmp[key][stat_t] += '(!)'
+                        if conf['voltage_thresholds'][0] != 'none':
+                            if float(hw[stat_t].strip('(!)')) <= conf['voltage_thresholds'][0]:
+                                hw[stat_t] += '(!)'
                                 if alert != 2: alert = 1
-                    elif self.hardware[2] == 'PS':
-                        if stat_t == 6:
-                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/1000
-                            tmp[key][stat_t] = '%.0f' % tmp[key][stat_t]
-                            if conf['voltage_thresholds'][3] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) >= conf['voltage_thresholds'][3]:
-                                    tmp[key][stat_t] += '(!!)'
-                                    alert = 2
-                            if conf['voltage_thresholds'][2] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) <= conf['voltage_thresholds'][2]:
-                                    tmp[key][stat_t] += '(!!)'
-                                    alert = 2
-                            if conf['voltage_thresholds'][1] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) >= conf['voltage_thresholds'][1]:
-                                    tmp[key][stat_t] += '(!)'
-                                    if alert != 2: alert = 1
-                            if conf['voltage_thresholds'][0] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) <= conf['voltage_thresholds'][0]:
-                                    tmp[key][stat_t] += '(!)'
-                                    if alert != 2: alert = 1
-                        elif stat_t == 5:
-                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/10
-                            tmp[key][stat_t] = '%.1f' % tmp[key][stat_t]
-                            if conf['current_thresholds'][3] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) >= conf['current_thresholds'][3]:
-                                    tmp[key][stat_t] += '(!!)'
-                                    alert = 2
-                            if conf['current_thresholds'][2] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) <= conf['current_thresholds'][2]:
-                                    tmp[key][stat_t] += '(!!)'
-                                    alert = 2
-                            if conf['current_thresholds'][1] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) >= conf['current_thresholds'][1]:
-                                    tmp[key][stat_t] += '(!)'
-                                    if alert != 2: alert = 1
-                            if conf['current_thresholds'][0] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) <= conf['current_thresholds'][0]:
-                                    tmp[key][stat_t] += '(!)'
-                                    if alert != 2: alert = 1
-                        elif stat_t == 2:
-                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/10
-                            tmp[key][stat_t] = '%.0f' % tmp[key][stat_t]
-                            if conf['watt_thresholds'][3] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) >= conf['watt_thresholds'][3]:
-                                    tmp[key][stat_t] += '(!!)'
-                                    alert = 2
-                            if conf['watt_thresholds'][2] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) <= conf['watt_thresholds'][2]:
-                                    tmp[key][stat_t] += '(!!)'
-                                    alert = 2
-                            if conf['watt_thresholds'][1] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) >= conf['watt_thresholds'][1]:
-                                    tmp[key][stat_t] += '(!)'
-                                    if alert != 2:
-                                        alert = 1
-                            if conf['watt_thresholds'][0] != 'none':
-                                if float(tmp[key][stat_t].strip('(!)')) <= conf['watt_thresholds'][0]:
-                                    tmp[key][stat_t] += '(!)'
-                                    if alert != 2:
-                                        alert = 1
-                    elif self.hardware[2] == 'PU':
-                        if conf['consumption_thresholds'][1] != 'none':
-                            if float(tmp[key][stat_t].strip('(!)')) >= conf['consumption_thresholds'][1]:
-                                tmp[key][stat_t] += '(!!)'
+                    elif stat_t == 5:
+                        hw[stat_t] = float(hw[stat_t].strip('(!)'))/10
+                        hw[stat_t] = '%.1f' % hw[stat_t]
+                        if conf['current_thresholds'][3] != 'none':
+                            if float(hw[stat_t].strip('(!)')) >= conf['current_thresholds'][3]:
+                                hw[stat_t] += '(!!)'
                                 alert = 2
-                        if conf['consumption_thresholds'][0] != 'none':
-                            if float(tmp[key][stat_t].strip('(!)')) >= conf['consumption_thresholds'][0]:
-                                tmp[key][stat_t] += '(!)'
+                        if conf['current_thresholds'][2] != 'none':
+                            if float(hw[stat_t].strip('(!)')) <= conf['current_thresholds'][2]:
+                                hw[stat_t] += '(!!)'
+                                alert = 2
+                        if conf['current_thresholds'][1] != 'none':
+                            if float(hw[stat_t].strip('(!)')) >= conf['current_thresholds'][1]:
+                                hw[stat_t] += '(!)'
                                 if alert != 2: alert = 1
-                    elif self.hardware[2] == 'Sensor':
-                        tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/10
-                        tmp[key][stat_t] = '%.1f' %tmp[key][stat_t]
-                        if conf['sensor_thresholds'][3] != 'none':
-                            if float(tmp[key][stat_t].strip('(!)')) >= conf['sensor_thresholds'][3]:
-                                tmp[key][stat_t] += '(!!)'
-                                alert = 2
-                        if conf['sensor_thresholds'][2] != 'none':
-                            if float(tmp[key][stat_t].strip('(!)')) <= conf['sensor_thresholds'][2]:
-                                tmp[key][stat_t] += '(!!)'
-                                alert = 2
-                        if conf['sensor_thresholds'][1] != 'none':
-                            if float(tmp[key][stat_t].strip('(!)')) >= conf['sensor_thresholds'][1]:
-                                tmp[key][stat_t] += '(!)'
+                        if conf['current_thresholds'][0] != 'none':
+                            if float(hw[stat_t].strip('(!)')) <= conf['current_thresholds'][0]:
+                                hw[stat_t] += '(!)'
                                 if alert != 2: alert = 1
-                        if conf['sensor_thresholds'][0] != 'none':
-                            if float(tmp[key][stat_t].strip('(!)')) <= conf['sensor_thresholds'][0]:
-                                tmp[key][stat_t] += '(!)'
-                                if alert != 2: alert = 1
-                    elif self.hardware[2] == 'VDisk':
-                        if conf['vdisk_thresholds'][1] != 'none':
-                            if int(tmp[key][stat_t].strip('(!)')) >= conf['vdisk_thresholds'][1]:
-                                tmp[key][stat_t] += '(!!)'
+                    elif stat_t == 2:
+                        hw[stat_t] = float(hw[stat_t].strip('(!)'))/10
+                        hw[stat_t] = '%.0f' % hw[stat_t]
+                        if conf['watt_thresholds'][3] != 'none':
+                            if float(hw[stat_t].strip('(!)')) >= conf['watt_thresholds'][3]:
+                                hw[stat_t] += '(!!)'
                                 alert = 2
-                        if conf['vdisk_thresholds'][0] != 'none':
-                            if int(tmp[key][stat_t].strip('(!)')) >= conf['vdisk_thresholds'][0]:
-                                tmp[key][stat_t] += '(!!)'
+                        if conf['watt_thresholds'][2] != 'none':
+                            if float(hw[stat_t].strip('(!)')) <= conf['watt_thresholds'][2]:
+                                hw[stat_t] += '(!!)'
                                 alert = 2
-        return tmp, code[alert]
+                        if conf['watt_thresholds'][1] != 'none':
+                            if float(hw[stat_t].strip('(!)')) >= conf['watt_thresholds'][1]:
+                                hw[stat_t] += '(!)'
+                                if alert != 2:
+                                    alert = 1
+                        if conf['watt_thresholds'][0] != 'none':
+                            if float(hw[stat_t].strip('(!)')) <= conf['watt_thresholds'][0]:
+                                hw[stat_t] += '(!)'
+                                if alert != 2:
+                                    alert = 1
+                elif self.hardware[2] == 'PU':
+                    if conf['consumption_thresholds'][1] != 'none':
+                        if float(hw[stat_t].strip('(!)')) >= conf['consumption_thresholds'][1]:
+                            hw[stat_t] += '(!!)'
+                            alert = 2
+                    if conf['consumption_thresholds'][0] != 'none':
+                        if float(hw[stat_t].strip('(!)')) >= conf['consumption_thresholds'][0]:
+                            hw[stat_t] += '(!)'
+                            if alert != 2: alert = 1
+                elif self.hardware[2] == 'Sensor':
+                    hw[stat_t] = float(hw[stat_t].strip('(!)'))/10
+                    hw[stat_t] = '%.1f' %hw[stat_t]
+                    if conf['sensor_thresholds'][3] != 'none':
+                        if float(hw[stat_t].strip('(!)')) >= conf['sensor_thresholds'][3]:
+                            hw[stat_t] += '(!!)'
+                            alert = 2
+                    if conf['sensor_thresholds'][2] != 'none':
+                        if float(hw[stat_t].strip('(!)')) <= conf['sensor_thresholds'][2]:
+                            hw[stat_t] += '(!!)'
+                            alert = 2
+                    if conf['sensor_thresholds'][1] != 'none':
+                        if float(hw[stat_t].strip('(!)')) >= conf['sensor_thresholds'][1]:
+                            hw[stat_t] += '(!)'
+                            if alert != 2: alert = 1
+                    if conf['sensor_thresholds'][0] != 'none':
+                        if float(hw[stat_t].strip('(!)')) <= conf['sensor_thresholds'][0]:
+                            hw[stat_t] += '(!)'
+                            if alert != 2: alert = 1
+                elif self.hardware[2] == 'VDisk':
+                    if conf['vdisk_thresholds'][1] != 'none':
+                        if int(hw[stat_t].strip('(!)')) >= conf['vdisk_thresholds'][1]:
+                            hw[stat_t] += '(!!)'
+                            alert = 2
+                    if conf['vdisk_thresholds'][0] != 'none':
+                        if int(hw[stat_t].strip('(!)')) >= conf['vdisk_thresholds'][0]:
+                            hw[stat_t] += '(!!)'
+                            alert = 2
+        return hw, code[alert]
 
     def main(self):
         hw_dict = {}
@@ -650,128 +675,203 @@ class PARSER:
         #--debug print '\n'.join(snmp_data)
         #--debug print hw_dict
         hw_dict = self.classifier(snmp_data, hw_dict)  # classify data
-        #--debug print hw_dict
+        if conf['debug']:
+		print hw_dict
         #--re-format output to suit hw type. Power is the most messed part!
         output = []
-        exit_code = [0, 'OK']
+        warnings = []
+        criticals = []
         if self.hardware[2] == 'PDisk':
             value_on_alert = [3,7,9]  # raise alert on these value. Mapped with all_hardware as list order.
             # int type for status check, string type for range check
-            if self.alert is True:
-                hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
             tmp = '%s %s (%s) %s GB: %s, PowerStat: %s, HotSpare: %s [%s, %s, S/N: %s] isFailing: %s'
             for hw in hw_dict.values():
-                for v in value_on_alert:
-                    v = int(v)
-                    hw[v] = hw[v].upper()
+                if self.alert is True:
+                    hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    for v in value_on_alert:
+                        v = int(v)
+                        hw[v] = hw[v].upper()
+                    if hw[5] == '(N/A)':
+                        hw_5 = hw[5]
+                    else:
+                        hw_5 = round(float(hw[5])/1024, 2)
+                    
+                    text = tmp % (self.hardware[2], hw[0], hw[1].split()[-1].replace('"', ''),
+                                         hw_5, hw[3], hw[9], hw[6].replace('HotSpare', '').replace('notASpare', 'no'),
+                                         hw[2].replace('"', ''), hw[8].upper(), hw[4].replace('"', ''), hw[7])
+                    if (exit_code[0] == 1):
+                        warnings.append (text)
+                    elif (exit_code[0] == 2):
+                        criticals.append (text)
+                
                 if hw[5] == '(N/A)':
                     hw_5 = hw[5]
-                else: hw_5 = round(float(hw[5])/1024, 2)
-                output.append(tmp % (self.hardware[2], hw[0], hw[1].split()[-1].replace('"', ''),
+                else:
+                    hw_5 = round(float(hw[5])/1024, 2)
+                
+                text = tmp % (self.hardware[2], hw[0], hw[1].split()[-1].replace('"', ''),
                                      hw_5, hw[3], hw[9], hw[6].replace('HotSpare', '').replace('notASpare', 'no'),
-                                     hw[2].replace('"', ''), hw[8].upper(), hw[4].replace('"', ''), hw[7]))
+                                     hw[2].replace('"', ''), hw[8].upper(), hw[4].replace('"', ''), hw[7])
+                output.append(text)
+                
+        elif self.hardware[2] == 'Server':
+            #hw_dict = {1: ['1', 'warn', '"Main System Chassis"', '"PowerEdge M630"', '"DT578C2"', '"dell-o2g-04"', '"2.30.30.30"']}
+            value_on_alert = [1]
+            tmp = '%s - %s: %s, S/N: %s, Firmware: %s, Bios: %s, %s'
+            for hw in hw_dict.values():
+                if self.alert is True:
+                    hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    for v in value_on_alert:
+                        v = int(v)
+                        hw[v] = hw[v].upper()
+                    if (exit_code[0] > 0):
+                        text = tmp % (hw[1], hw[2].replace('"', ''), hw[3].replace('"', '\''), hw[4].replace('"', '\''), hw[8].replace('"', '\''), hw[7].replace('"', '\''), hw[5].replace('"', '\''))
+                        if (exit_code[0] == 1):
+                            warnings.append (text)
+                        elif (exit_code[0] == 2):
+                            criticals.append (text)
+                output.append(tmp % (hw[1], hw[2].replace('"', ''), hw[3].replace('"', '\''), hw[4].replace('"', '\''), hw[8].replace('"', '\''), hw[7].replace('"', '\''), hw[5].replace('"', '\'')))
+
         elif self.hardware[2] == 'Fan':
             value_on_alert = [1, 2, '3']
-            if self.alert is True:
-                hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
-            tmp = '%s: %s RPM - %s/%s%s'
+            tmp = '%s: %s RPM - %s/%s'
             for hw in hw_dict.values():
-                for v in value_on_alert:
-                    v = int(v)
-                    hw[v] = hw[v].upper()
+                if self.alert is True:
+                    hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    for v in value_on_alert:
+                        v = int(v)
+                        hw[v] = hw[v].upper()
+                    if (exit_code[0] > 0):
+                        text = tmp % (hw[4].replace('"', '').replace(' RPM', ''), hw[3], hw[1], hw[2])
+                        if (exit_code[0] == 1):
+                            warnings.append (text)
+                        elif (exit_code[0] == 2):
+                            criticals.append (text)
+                            
                 if self.perf is True and hw[3].split('(')[0]:
                     perf_data = ' | FAN%s_RPM=%s;;;%s;%s' % (hw[0], hw[3].split('(')[0], conf['fan_thresholds'][2], conf['fan_thresholds'][3])
                     perf_data = perf_data.replace('none','')
                 else:
                     perf_data = ''
-                output.append(tmp % (hw[4].replace('"', '').replace(' RPM', ''), hw[3], hw[1], hw[2], perf_data))
+                output.append(tmp % (hw[4].replace('"', '').replace(' RPM', ''), hw[3], hw[1], hw[2]) + perf_data)
+
         elif self.hardware[2] == 'Sensor':
             value_on_alert = [1, 2, '3']  # int type for status check, str type for range check
-            if self.alert is True:
-                hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
-                tmp = '%s: %s C %s/%s%s'
-            else:
-                tmp = '%s: %s C %s/%s%s'
+            tmp = '%s: %s C %s/%s'
             for hw in hw_dict.values():
-                for v in value_on_alert:
-                    v = int(v)
-                    hw[v] = hw[v].upper()
+                if self.alert is True:
+                    hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    for v in value_on_alert:
+                        v = int(v)
+                        hw[v] = hw[v].upper()
+                    if (exit_code[0] > 0):
+                        text = tmp % (hw[4].replace('"', ''), hw[3], hw[1], hw[2])
+                        if (exit_code[0] == 1):
+                           warnings.append (text)
+                        elif (exit_code[0] == 2):
+                           criticals.append (text)
+                           
                 if self.perf is True and hw[3] and hw[3] != '(N/A)':
-                    perf_data = ' | %s=%s;;;%s;%s' \
+                    perf_data = " | '%s'=%s;;;%s;%s" \
                                 % (hw[4].replace('"', ''), hw[3], conf['sensor_thresholds'][2], conf['sensor_thresholds'][3])
                     perf_data = perf_data.replace('none','')
                 else:
                     perf_data = ''
                 if self.alert is True:
-                    output.append(tmp % (hw[4].replace('"', ''), hw[3], hw[1], hw[2], perf_data))
+                    output.append(tmp % (hw[4].replace('"', ''), hw[3], hw[1], hw[2]) + perf_data)
                 else:
                     if hw[3] == '(N/A)':
                         hw_3 = hw[3]
                     else: hw_3 = round(float(hw[3])/10, 1)
-                    output.append(tmp % (hw[4].replace('"', ''), hw_3, hw[1], hw[2], perf_data))
+                    output.append(tmp % (hw[4].replace('"', ''), hw_3, hw[1], hw[2]) + perf_data)
+
         elif self.hardware[2] == 'CPU':
             value_on_alert = [1, 2]
-            if self.alert is True:
-                hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
             tmp = '%s %s (%s cores/%s threads): %s/%s [%s]'
             for hw in hw_dict.values():
-                for v in value_on_alert:
-                    v = int(v)
-                    hw[v] = hw[v].upper()
+                if self.alert is True:
+                    hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    for v in value_on_alert:
+                        v = int(v)
+                        hw[v] = hw[v].upper()
+                    if (exit_code[0] > 0):
+                        text = tmp % (self.hardware[2], hw[0], hw[3].split()[-1],
+                                     hw[4].split()[-1], hw[1], hw[2], hw[5].replace('"', ''))
+                        if (exit_code[0] == 1):
+                            warnings.append (text)
+                        elif (exit_code[0] == 2):
+                            criticals.append (text)
+                            
                 output.append(tmp % (self.hardware[2], hw[0], hw[3].split()[-1],
                                      hw[4].split()[-1], hw[1], hw[2], hw[5].replace('"', '')))
+
         elif self.hardware[2] == 'PU':
             value_on_alert = [1, 2, 3, '4']
-            if self.alert is True:
-                hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
-            tmp = '%s %s: %s/%s, RedundancyStatus: %s, SystemBoard Pwr Consumption: %s W%s'
+            tmp = '%s %s: %s/%s, RedundancyStatus: %s, SystemBoard Pwr Consumption: %s W'
             for hw in hw_dict.values():
-                if len(hw) < 5:  # just in case no pwr consumption found
-                    hw.append('(N/A)')
-                for v in value_on_alert:
-                    v = int(v)
-                    hw[v] = hw[v].upper()
+                if self.alert is True:
+                    hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    if len(hw) < 5:  # just in case no pwr consumption found
+                        hw.append('(N/A)')
+                    for v in value_on_alert:
+                        v = int(v)
+                        hw[v] = hw[v].upper()
+                    if (exit_code[0] > 0):
+                        text = tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[2], hw[4])
+                        if (exit_code[0] == 1):
+                            warnings.append (text)
+                        elif (exit_code[0] == 2):
+                            criticals.append (text)
+                            
                 if self.perf is True and hw[4].split('(')[0]:
                     perf_data = ' | PwrConsumption=%s;;;;' % (hw[4].split('(')[0])
                     perf_data = perf_data.replace('none','')
                 else:
                     perf_data = ''
-                output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[2], hw[4], perf_data))
+                output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[2], hw[4]) + perf_data)
+        
         elif self.hardware[2] == 'PS':
             value_on_alert = [1, '2', '6', '5']
-            if self.alert is True:
-                hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
-                tmp = '%s %s: %s, Volt I/O: %s V/%s V, Current: %s A, Watt I/O: %s W/%s W%s'
-            else:
-                tmp = '%s %s: %s, Volt I/O: %s V/%s V, Current: %s A, Watt I/O: %s W/%s W'
+            tmp = '%s %s: %s, Volt I/O: %s V/%s V, Current: %s A, Watt I/O: %s W/%s W'
             for hw in hw_dict.values():
-                for v in value_on_alert:
-                    v = int(v)
-                    hw[v] = hw[v].upper()
+                if self.alert is True:
+                    hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    for v in value_on_alert:
+                        v = int(v)
+                        hw[v] = hw[v].upper()
+                    if (exit_code[0] > 0):
+                        text = tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[6], hw[5], hw_4, hw[2])
+                        if (exit_code[0] == 1):
+                            warnings.append (text)
+                        elif (exit_code[0] == 2):
+                            criticals.append (text)
+                            
+                
                 if self.perf is True:
                     if hw[4] == '(N/A)':
                         hw_4 = hw[4]
                     else: hw_4 = round(float(hw[4])/10, 0)
                     if not hw[3]:
-			hw[3] = 0
+                        hw[3] = 0
                     if not hw[6].split('(')[0]:
-			hw[6] = '(0)'
+                        hw[6] = '(0)'
                     if not hw[5].split('(')[0]:
-			hw[5] = '(0)'
+                        hw[5] = '(0)'
                     if not hw_4:
-			hw_4 = 0
+                        hw_4 = 0
                     if not hw[2].split('(')[0]:
-			hw[2] = '(0)'
+                        hw[2] = '(0)'
                     perf_data = ' | VoltINPUT=%s;;;; VoltOUTPUT=%s;;;; Current=%s;;;; WattINPUT=%s;;;; WattOUTPUT=%s;;;;'\
                                 %(hw[3], hw[6].split('(')[0], hw[5].split('(')[0], hw_4, hw[2].split('(')[0])
                     perf_data = perf_data.replace('none','')
                 else:
                     perf_data = ''
+                
                 if self.alert is True:
                     if hw[4] == '(N/A)':
                         hw_4 = hw[4]
                     else: hw_4 = float(hw[4])/10
-                    output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[6], hw[5], hw_4, hw[2], perf_data))
+                    output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[6], hw[5], hw_4, hw[2]) + perf_data)
                 else:
                     if hw[4] == '(N/A)':
                         hw_4 = hw[4]
@@ -786,16 +886,26 @@ class PARSER:
                         hw_2 = hw[2]
                     else: hw_2 = float(hw[2])/10
                     output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw_6, hw_5, hw_4, hw_2))
+        
         elif self.hardware[2] == 'Memory':
             value_on_alert = [1, 2]
-            if self.alert is True:
-                hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
             #--debug print hw_dict
             tmp = '%s %s (%s) %s GB/%s MHz: %s/%s [%s, %s, S/N: %s]'
             for hw in hw_dict.values():
-                for v in value_on_alert:
-                    v = int(v)
-                    hw[v] = hw[v].upper()
+                if self.alert is True:
+                    hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    for v in value_on_alert:
+                        v = int(v)
+                        hw[v] = hw[v].upper()
+                    if (exit_code[0] > 0):
+                        text = tmp % (self.hardware[2], hw[0], hw[4].replace('.', ' ').replace('"', ''),
+                                     hw_5, hw[6].split()[-1], hw[1], hw[2], hw[3].replace('deviceTypeIs', ''),
+                                     hw[7].replace('"', ''), hw[8].replace('"', ''),)
+                        if (exit_code[0] == 1):
+                            warnings.append (text)
+                        elif (exit_code[0] == 2):
+                            criticals.append (text)
+                            
                 if hw[5] == '(N/A)':
                     hw_5 = hw[5]
                 else: hw_5 = round(float(hw[5].split()[-1])/(1024*1024), 2)
@@ -808,50 +918,75 @@ class PARSER:
                 detect_diff = int(conf['mem_modules']) - len(hw_dict)
 
                 if detect_diff <= -1:
-                    output.append (self.hardware[2] + ': Number of memory modules not correct!')
+                    warnings.append (self.hardware[2] + ': Number of memory modules not correct!')
 
                 elif detect_diff == 1:
-                    output.append (self.hardware[2] + ': 1 memory module not detected!!!')
+                    criticals.append (self.hardware[2] + ': 1 memory module not detected!!!')
 
                 elif detect_diff >= 1:
-                    output.append (self.hardware[2] + ': ' + str(detect_diff) + ' memory modules not detected!!!')
+                    criticals.append (self.hardware[2] + ': ' + str(detect_diff) + ' memory modules not detected!!!')
 
         elif self.hardware[2] == 'Battery':
             value_on_alert = [1, 2, 3]
-            if self.alert is True:
-                hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
             tmp = '%s: %s/%s [%s]'
             for hw in hw_dict.values():
-                for v in value_on_alert:
-                    v = int(v)
-                    hw[v] = hw[v].upper()
+                if self.alert is True:
+                    hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    for v in value_on_alert:
+                        v = int(v)
+                        hw[v] = hw[v].upper()
+                    if (exit_code[0] > 0):
+                        text = tmp % (hw[4].replace('"', ''), hw[1], hw[2], hw[3])
+                        if (exit_code[0] == 1):
+                            warnings.append (text)
+                        elif (exit_code[0] == 2):
+                            criticals.append (text)
+                            
                 output.append(tmp % (hw[4].replace('"', ''), hw[1], hw[2], hw[3]))
+        
         elif self.hardware[2] == 'Global':
             value_on_alert = [0]
             ## print hw_dict
-            if self.alert is True:
-                hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
             tmp = '%s %s'
             for hw in hw_dict.values():
-                for v in value_on_alert:
-                    v = int(v)
-                    hw[v] = hw[v].upper()
+                if self.alert is True:
+                    hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    for v in value_on_alert:
+                        v = int(v)
+                        hw[v] = hw[v].upper()
+                    if (exit_code[0] > 0):
+                        text = tmp % (self.hardware[0], hw[0])
+                        if (exit_code[0] == 1):
+                            warnings.append (text)
+                        elif (exit_code[0] == 2):
+                            criticals.append (text)
                 output.append(tmp % (self.hardware[0],hw[0]))
+        
         elif self.hardware[2] == 'VDisk':
             value_on_alert = [2, 5, '6']
-            if self.alert is True:
-                hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
             tmp = '%s %s (%s): %s/%s, %s (%s GB), BadBlock: %s [%s]'
             for hw in hw_dict.values():
-                for v in value_on_alert:
-                    v = int(v)
-                    hw[v] = hw[v].upper()
-                if hw[3] == '(N/A)' or hw[3] == '(n/a)':
+                if self.alert is True:
+                    hw, exit_code = self.raise_alert(hw, value_on_alert)
+                    for v in value_on_alert:
+                        v = int(v)
+                        hw[v] = hw[v].upper()
+                    if hw[3] == '(N/A)' or hw[3] == '(n/a)':
+                        hw_3 = hw[3]
+                    else: hw_3 = round(float(hw[3])/1024, 2)
+                    if (exit_code[0] > 0):
+                        text = tmp % (self.hardware[2], hw[0], hw[1].replace('"', ''), hw[5], hw[2], hw[4].replace('r', 'RAID-'), hw_3, hw[6], hw[7].replace('"', ''))
+                        if (exit_code[0] == 1):
+                            warnings.append (text)
+                        elif (exit_code[0] == 2):
+                            criticals.append (text)
+                if hw[3] == '(N/A)':
                     hw_3 = hw[3]
-                else: hw_3 = round(float(hw[3])/1024, 2)
+                else:
+                    hw_3 = round(float(hw[3])/1024, 2)            
                 output.append(tmp % (self.hardware[2], hw[0], hw[1].replace('"', ''), hw[5], hw[2],
                                      hw[4].replace('r', 'RAID-'), hw_3, hw[6], hw[7].replace('"', '')))
-        return output, exit_code
+        return output, warnings, criticals
 
 
 if __name__ == '__main__':
@@ -862,35 +997,62 @@ if __name__ == '__main__':
                 config_reader()
                 break
     config_verify()
-    if conf['hardware'] is None:  # check all hardware
-        exit_code = 0
-        for key in all_hardware.keys():
-            conf['hardware'] = [key, None]
-            hw_info = all_hardware[key]
-            result, tmp_code = PARSER().main()
-            if tmp_code[0] == 2:
-                exit_code = tmp_code[0]
-            elif tmp_code[0] == 1:
-                if exit_code != 2:
-                    exit_code = tmp_code[0]
-            print '%s' % key
-            sys.stdout.write('--')
-            print '\n--'.join(result)
-        sys.exit(exit_code)
+    
+    if conf['hardware'] is None:
+        to_check = all_hardware.keys()
+        item = None
     else:
-        not_found = 0
-        for key in all_hardware.keys():
-            if conf['hardware'][0] != key:
-                not_found += 1
-            if not_found == len(all_hardware.keys()):
-                print 'sorry, hardware not supported!'
-                sys.exit(1)
-        result, exit_code = PARSER().main()
-        if conf['hardware'][1] is None:
-            print '\n'.join(result)
-        else:
-            if conf['alert'] is True:
-                print '%s - %s' % (exit_code[1], '\n'.join(result))
-            else:
-                print '%s' % '\n'.join(result)
-        sys.exit(exit_code[0])
+	if not conf['hardware'][0] in all_hardware.keys():
+		print 'sorry, hardware not supported!'
+                sys.exit(3)
+	
+	to_check = [conf['hardware'][0]]
+	item = conf['hardware'][1]
+	
+    exit_code = 0
+    warnings = []
+    criticals = []
+    results = []
+    system = ''
+    
+    for key in to_check:
+            conf['hardware'] = [key, item]
+            
+            block_results, block_warnings, block_criticals = PARSER().main()
+
+            warnings.extend (block_warnings)
+            criticals.extend (block_criticals)
+            
+            results.append (key)
+            results.extend (block_results)
+            results.append ("--")
+
+            if key == 'SERVER':
+                system = block_results[0]
+
+    if (criticals):
+    	    exit_code = 2
+    	    text = "CRITICAL: "
+    elif (warnings):
+    	    exit_code = 1
+    	    text = "WARNING: "
+    else:
+    	    exit_code = 0
+    	    text = system
+
+    criticals.extend (warnings)
+    text += ", ".join (criticals)
+    if text:
+	    print text
+
+    if text and not conf['quiet']:
+	print
+    for line in results:
+	if conf['quiet']:
+		if '|' in line:
+			line = '|' + line.split('|')[-1]
+			print line
+	else:
+		print line
+
+    sys.exit(exit_code)
