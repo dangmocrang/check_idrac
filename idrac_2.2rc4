@@ -697,8 +697,8 @@ class PARSER:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if self.perf is True and hw[3] and hw[3] != '(N/A)':
-                    perf_data = ' | %s=%s;;;%s;%s' \
-                                % (hw[4].replace('"', ''), hw[3], conf['sensor_thresholds'][2], conf['sensor_thresholds'][3])
+                    perf_data = ' | %s=%s;%s;%s;%s;%s' \
+                                % (hw[4].replace('"', ''), hw[3], conf['sensor_thresholds'][0], conf['sensor_thresholds'][1], conf['sensor_thresholds'][2], conf['sensor_thresholds'][3])
                     perf_data = perf_data.replace('none','')
                 else:
                     perf_data = ''
