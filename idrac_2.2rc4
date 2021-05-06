@@ -756,15 +756,15 @@ class PARSER:
                         hw_4 = hw[4]
                     else: hw_4 = round(float(hw[4])/10, 0)
                     if not hw[3]:
-			hw[3] = 0
+                        hw[3] = 0
                     if not hw[6].split('(')[0]:
-			hw[6] = '(0)'
+                        hw[6] = '(0)'
                     if not hw[5].split('(')[0]:
-			hw[5] = '(0)'
+                        hw[5] = '(0)'
                     if not hw_4:
-			hw_4 = 0
+                        hw_4 = 0
                     if not hw[2].split('(')[0]:
-			hw[2] = '(0)'
+                        hw[2] = '(0)'
                     perf_data = ' | VoltINPUT=%s;;;; VoltOUTPUT=%s;;;; Current=%s;;;; WattINPUT=%s;;;; WattOUTPUT=%s;;;;'\
                                 %(hw[3], hw[6].split('(')[0], hw[5].split('(')[0], hw_4, hw[2].split('(')[0])
                     perf_data = perf_data.replace('none','')
