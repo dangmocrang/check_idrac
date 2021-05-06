@@ -10,9 +10,9 @@ import sys
 import optparse
 import re
 import os
-import ConfigParser
-reader = ConfigParser.RawConfigParser()
+import configparser
 run = subprocess.run
+reader = configparser.RawConfigParser()
 
 conf = {'snmp_version': None,
         'snmp_community': None,
