@@ -251,8 +251,10 @@ def config_reader():
     else:
         try:
             reader.read(filenames=conf['file'])
-        except ConfigParser.ParsingError, err_parsing: print 'invalid configuration syntax: %s' % err_parsing.errors
-        except IOError, err_read_file: print err_read_file
+        except ConfigParser.ParsingError as err_parsing:
+            print('invalid configuration syntax: %s' % err_parsing.errors)
+        except IOError as err_read_file:
+            print(err_read_file)
         else:
             for key in conf_file.keys():
                 try:
