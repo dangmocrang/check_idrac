@@ -191,7 +191,7 @@ def cli_reader():
     optp.add_option('--mem-modules', help='number of installed memory modules', dest='mem_modules', metavar='NUMBER')
     opts, args = optp.parse_args()
     if opts.host is None:
-        print 'no IP address specified!'
+        print('no IP address specified!')
         optp.print_help()
         sys.exit(1)
     else:
@@ -246,7 +246,7 @@ def cli_reader():
 
 def config_reader():
     if not os.path.isfile(conf['file']):
-        print 'file %s not found!' % conf['file']
+        print('file %s not found!' % conf['file'])
         sys.exit(1)
     else:
         try:
@@ -300,42 +300,42 @@ def config_verify():  # check if configurations are properly set
     # verify snmp
     if conf['snmp_version'] == '2c' or conf['snmp_version'] == '2C':
         if conf['snmp_community'] is None:
-            print 'community not configured!'
+            print('community not configured!')
             sys.exit(1)
     elif conf['snmp_version'] == '3':
         if conf['snmp_security_name'] is None:
-            print 'security_name not configured!'
+            print('security_name not configured!')
             sys.exit(1)
         if conf['snmp_authentication_protocol'] is None:
-            print 'authentication_protocol not configured!'
+            print('authentication_protocol not configured!')
             sys.exit(1)
         elif conf['snmp_authentication_protocol'].lower() != 'md5' and conf['snmp_authentication_protocol'].lower() != 'sha':
-            print 'set authentication_protocol to MD5 or SHA'
+            print('set authentication_protocol to MD5 or SHA')
             sys.exit(1)
         if conf['snmp_authentication_password'] is None:
-            print 'authentication_password not configured!'
+            print('authentication_password not configured!')
             sys.exit(1)
         if conf['snmp_privacy_protocol'] is None:
-            print 'privacy_protocol not configured!'
+            print('privacy_protocol not configured!')
             sys.exit(1)
         elif conf['snmp_privacy_protocol'].lower() != 'aes' and conf['snmp_privacy_protocol'].lower() != 'des':
-            print 'set privacy_protocol to DES or AES'
+            print('set privacy_protocol to DES or AES')
             sys.exit(1)
         if conf['snmp_privacy_password'] is None:
-            print 'privacy_password not configured!'
+            print('privacy_password not configured!')
             sys.exit(1)
         if conf['snmp_security_level'] is None:
-            print 'security_level not configured!'
+            print('security_level not configured!')
             sys.exit(1)
         elif conf['snmp_security_level'].lower() != 'noauthnopriv' and conf['snmp_security_level'].lower() != 'authnopriv' and conf['snmp_security_level'].lower() != 'authpriv':
-            print 'set security_level to noAuthNoPriv or authNoPriv or authPriv'
+            print('set security_level to noAuthNoPriv or authNoPriv or authPriv')
             sys.exit(1)
     else:
-        print 'snmp version "%s" is not supported!' % conf['snmp_version']
+        print('snmp version "%s" is not supported!' % conf['snmp_version'])
         sys.exit(1)
     if conf['mib'] != 'ALL':
         if not os.path.isfile(conf['mib']):
-            print 'file %s not found!' % conf['mib']
+            print('file %s not found!' % conf['mib'])
             sys.exit(1)
     # set default state alert if user forgot to set
     if conf['state_ok'] is None: conf['state_ok'] = '0|ok|online|on|spunup|full|ready|enabled|presence'
@@ -347,11 +347,11 @@ def config_verify():  # check if configurations are properly set
     conf['state_crit'] = conf['state_crit'].split('|')
     for w in conf['state_warn']:
         if w in conf['state_ok'] or w in conf['state_crit']:
-            print 'state thresholds overlapped!'
+            print('state thresholds overlapped!')
             sys.exit(1)
     for c in conf['state_crit']:
         if c in conf['state_ok']:
-            print 'state thresholds overlapped!'
+            print('state thresholds overlapped!')
             sys.exit(1)
     conf['state_ok'] = '|'.join(conf['state_ok'])
     conf['state_warn'] = '|'.join(conf['state_warn'])
@@ -385,17 +385,17 @@ class PARSER:
         output=scProc.stdout.decode('utf-8') + '\n' + scProc.stderr.decode('utf-8')
         if scProc.returncode != 0:
             if 'Unknown Object Identifier' in output:
-                print 'your MIB may out of dated!'
-                print 'error -', output.replace('\n', '. ')
+                print('your MIB may out of dated!')
+                print('error -', output.replace('\n', '. '))
             elif 'Timeout:' in output:
-                print 'SNMP timeout!'
+                print('SNMP timeout!')
             else:
-                print output
+                print(output)
             sys.exit(1)
         else:
             # debug print output
             if 'No Such Instance currently exists at this OID' in output:
-                print 'hardware not found! If you sure the hw exists then you may want to edit TRANSLATOR code (line 612).'
+                print('hardware not found! If you sure the hw exists then you may want to edit TRANSLATOR code (line 612).')
                 sys.exit(1)
             # do extra queries for VOLT & CURRENT
             if self.order is None:
@@ -876,9 +876,9 @@ if __name__ == '__main__':
             elif tmp_code[0] == 1:
                 if exit_code != 2:
                     exit_code = tmp_code[0]
-            print '%s' % key
+            print('%s' % key)
             sys.stdout.write('--')
-            print '\n--'.join(result)
+            print('\n--'.join(result))
         sys.exit(exit_code)
     else:
         not_found = 0
@@ -886,14 +886,14 @@ if __name__ == '__main__':
             if conf['hardware'][0] != key:
                 not_found += 1
             if not_found == len(all_hardware.keys()):
-                print 'sorry, hardware not supported!'
+                print('sorry, hardware not supported!')
                 sys.exit(1)
         result, exit_code = PARSER().main()
         if conf['hardware'][1] is None:
-            print '\n'.join(result)
+            print('\n'.join(result))
         else:
             if conf['alert'] is True:
-                print '%s - %s' % (exit_code[1], '\n'.join(result))
+                print('%s - %s' % (exit_code[1], '\n'.join(result)))
             else:
-                print '%s' % '\n'.join(result)
+                print('%s' % '\n'.join(result))
         sys.exit(exit_code[0])
