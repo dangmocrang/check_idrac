@@ -341,7 +341,7 @@ def config_verify():  # check if configurations are properly set
             print('file %s not found!' % conf['mib'])
             sys.exit(1)
     # set default state alert if user forgot to set
-    if conf['state_ok'] is None: conf['state_ok'] = '0|ok|online|on|spunup|full|ready|enabled|presence'
+    if conf['state_ok'] is None: conf['state_ok'] = '0|ok|online|on|spunup|full|ready|enabled|presence|NONRAID'
     if conf['state_warn'] is None: conf['state_warn'] = '$ALL$'
     if conf['state_crit'] is None: conf['state_crit'] = 'critical|nonRecoverable|fail'
     # verify if state alert is overlapped
