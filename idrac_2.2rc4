@@ -863,7 +863,6 @@ class PARSER:
             exit_code = [2, 'CRITICAL']
             output.append("CRITICAL: The number of disks expected ({}) does not correspond to the number of disks detected ({})".format(expected_disks, len(hw_dict)))
         else:
-            exit_code = [0, 'OK']
             output.append("OK: All disks are present")
         return output, exit_code
 
