@@ -7,7 +7,7 @@ __license__ = 'GPLv3'
 
 import subprocess
 import sys
-import optparse
+import argparse
 import re
 import os
 import configparser
@@ -162,46 +162,46 @@ def is_number(parameters, x):  # input parameters and how many need to parse
 
 
 def cli_reader():
-    optp = optparse.OptionParser()
-    optp.add_option('-H', '--host', help='IP address', dest='host')
-    optp.add_option('-v', help='specifies SNMP version to use', dest='version', metavar='2c|3')
-    optp.add_option('-u', help='set security name', dest='sec_name', metavar='USER-NAME')
-    optp.add_option('-a', help='set authentication protocol (MD5|SHA)', dest='auth_protocol', metavar='PROTOCOL')
-    optp.add_option('-A', help='set authentication protocol pass phrase', dest='auth_pass', metavar='PASSPHRASE')
-    optp.add_option('-x', help='set privacy protocol (DES|AES)', dest='pri_protocol', metavar='PROTOCOL')
-    optp.add_option('-X', help='set privacy protocol pass phrase', dest='pri_pass', metavar='PASSPHRASE')
-    optp.add_option('-l', help='set security level (noAuthNoPriv|authNoPriv|authPriv)', dest='level', metavar='LEVEL')
-    optp.add_option('-c', help='SNMPv2 community string', dest='community', type='string', metavar='COMMUNITY')
-    optp.add_option('-f', help='configuration file. COMMAND LINE WILL OVERWRITE CONFIGURATION FILE PARAMETERS',
+    args = argparse.ArgumentParser()
+    args.add_argument('-H', '--host', help='IP address', dest='host')
+    args.add_argument('-v', help='specifies SNMP version to use', dest='version', metavar='2c|3')
+    args.add_argument('-u', help='set security name', dest='sec_name', metavar='USER-NAME')
+    args.add_argument('-a', help='set authentication protocol (MD5|SHA)', dest='auth_protocol', metavar='PROTOCOL')
+    args.add_argument('-A', help='set authentication protocol pass phrase', dest='auth_pass', metavar='PASSPHRASE')
+    args.add_argument('-x', help='set privacy protocol (DES|AES)', dest='pri_protocol', metavar='PROTOCOL')
+    args.add_argument('-X', help='set privacy protocol pass phrase', dest='pri_pass', metavar='PASSPHRASE')
+    args.add_argument('-l', help='set security level (noAuthNoPriv|authNoPriv|authPriv)', dest='level', metavar='LEVEL')
+    args.add_argument('-c', help='SNMPv2 community string', dest='community', metavar='COMMUNITY')
+    args.add_argument('-f', help='configuration file. COMMAND LINE WILL OVERWRITE CONFIGURATION FILE PARAMETERS',
                     dest='cfg', metavar='FILE')
-    optp.add_option('-m', help='specific MIB file. Default is load all MIBs', dest='mib', metavar='FILE')
-    optp.add_option('-n', '--no-alert', help='always return with exit code 0', action='store_true', dest='no_alert')
-    optp.add_option('-w',
+    args.add_argument('-m', help='specific MIB file. Default is load all MIBs', dest='mib', metavar='FILE')
+    args.add_argument('-n', '--no-alert', help='always return with exit code 0', action='store_true', dest='no_alert')
+    args.add_argument('-w',
                     help='hardware to check. If no hardware specified, all will be listed: DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY',
                     dest='hardware', metavar='FAN|FAN#1|MEM')
-    optp.add_option('-p', help='enable performance data', dest='perf', action='store_true')
-    optp.add_option('-d', help='output debug info. Don\'t use when called by nagios.', dest='debug',
+    args.add_argument('-p', help='enable performance data', dest='perf', action='store_true')
+    args.add_argument('-d', help='output debug info. Don\'t use when called by nagios.', dest='debug',
                     action='store_true')
-    optp.add_option('--fan-warn', help='FAN rpm warning thresholds', dest='fan_warn', metavar='MIN,MAX')
-    optp.add_option('--fan-crit', help='FAN rpm critical thresholds', dest='fan_crit', metavar='MIN,MAX')
-    optp.add_option('--temp-warn', help='TEMPERATURE warning thresholds', dest='temp_warn', metavar='MIN,MAX')
-    optp.add_option('--temp-crit', help='TEMPERATURE critical thresholds', dest='temp_crit', metavar='MIN,MAX')
-    optp.add_option('--volt-warn', help='output VOLTAGE warning thresholds', dest='volt_warn', metavar='MIN,MAX')
-    optp.add_option('--volt-crit', help='output VOLTAGE critical thresholds', dest='volt_crit', metavar='MIN,MAX')
-    optp.add_option('--cur-warn', help='output CURRENT warning thresholds', dest='cur_warn', metavar='MIN,MAX')
-    optp.add_option('--cur-crit', help='output CURRENT critical thresholds', dest='cur_crit', metavar='MIN,MAX')
-    optp.add_option('--wat-warn', help='output WATT warning thresholds', dest='wat_warn', metavar='MIN,MAX')
-    optp.add_option('--wat-crit', help='output WATT critical thresholds', dest='wat_crit', metavar='MIN,MAX')
-    optp.add_option('--pwr-alert', help='power consumption', dest='consume', metavar='WARN,CRIT')
-    optp.add_option('--vdisk-bad', help='number of bad block', dest='vdisk', metavar='WARN,CRIT')
-    optp.add_option('--ok', help='ok|online|on|spunup|full|ready|enabled|presence', dest='ok', metavar='STATES')
-    optp.add_option('--warn', help='$ALL$', dest='warn', metavar='STATES')
-    optp.add_option('--crit', help='critical|nonRecoverable|fail', dest='crit', metavar='STATES')
-    optp.add_option('--mem-modules', help='number of installed memory modules', dest='mem_modules', metavar='NUMBER')
-    opts, args = optp.parse_args()
+    args.add_argument('--fan-warn', help='FAN rpm warning thresholds', dest='fan_warn', metavar='MIN,MAX')
+    args.add_argument('--fan-crit', help='FAN rpm critical thresholds', dest='fan_crit', metavar='MIN,MAX')
+    args.add_argument('--temp-warn', help='TEMPERATURE warning thresholds', dest='temp_warn', metavar='MIN,MAX')
+    args.add_argument('--temp-crit', help='TEMPERATURE critical thresholds', dest='temp_crit', metavar='MIN,MAX')
+    args.add_argument('--volt-warn', help='output VOLTAGE warning thresholds', dest='volt_warn', metavar='MIN,MAX')
+    args.add_argument('--volt-crit', help='output VOLTAGE critical thresholds', dest='volt_crit', metavar='MIN,MAX')
+    args.add_argument('--cur-warn', help='output CURRENT warning thresholds', dest='cur_warn', metavar='MIN,MAX')
+    args.add_argument('--cur-crit', help='output CURRENT critical thresholds', dest='cur_crit', metavar='MIN,MAX')
+    args.add_argument('--wat-warn', help='output WATT warning thresholds', dest='wat_warn', metavar='MIN,MAX')
+    args.add_argument('--wat-crit', help='output WATT critical thresholds', dest='wat_crit', metavar='MIN,MAX')
+    args.add_argument('--pwr-alert', help='power consumption', dest='consume', metavar='WARN,CRIT')
+    args.add_argument('--vdisk-bad', help='number of bad block', dest='vdisk', metavar='WARN,CRIT')
+    args.add_argument('--ok', help='ok|online|on|spunup|full|ready|enabled|presence', dest='ok', metavar='STATES')
+    args.add_argument('--warn', help='$ALL$', dest='warn', metavar='STATES')
+    args.add_argument('--crit', help='critical|nonRecoverable|fail', dest='crit', metavar='STATES')
+    args.add_argument('--mem-modules', help='number of installed memory modules', dest='mem_modules', metavar='NUMBER')
+    opts = args.parse_args()
     if opts.host is None:
         print('no IP address specified!')
-        optp.print_help()
+        opts.print_help()
         sys.exit(1)
     else:
         conf['host_ipaddress'] = opts.host
