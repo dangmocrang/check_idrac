@@ -440,7 +440,7 @@ class PARSER:
                 print(output)
             if 'No Such Instance currently exists at this OID' in output:
                 print(
-                    'hardware not found! If you sure the hw exists then you may want to edit TRANSLATOR code (line 612).')
+                    'hardware not found! If you sure the hw exists then you may want to edit TRANSLATOR code.')
                 sys.exit(1)
             # do extra queries for VOLT & CURRENT
             if self.order is None:
