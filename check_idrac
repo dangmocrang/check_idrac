@@ -114,7 +114,7 @@ all_hardware = {
                    r'coolingDeviceStatus\.|'
                    r'coolingDeviceReading\.|'
                    r'coolingDeviceLocationName\.'],
-    'BATTERY': ['systemBattery', '',
+    'BATTERY': ['systemBatteryTable', '',
                 'Battery', r'systemBatteryIndex\.|'
                            r'systemBatteryStateSettings\.|'
                            r'systemBatteryStatus\.|'
