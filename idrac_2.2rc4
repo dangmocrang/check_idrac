@@ -376,7 +376,7 @@ def config_verify():  # check if configurations are properly set
             sys.exit(1)
     # set default state alert if user forgot to set
     if conf['state_ok'] is None:
-        conf['state_ok'] = '0|ok|online|on|spunup|full|ready|enabled|presence|NONRAID'
+        conf['state_ok'] = '0|ok|online|on|spunup|full|ready|enabled|presence|NONRAID|nonraid'
     if conf['state_warn'] is None:
         conf['state_warn'] = '$ALL$'
     if conf['state_crit'] is None:
@@ -424,7 +424,8 @@ class PARSER:
         available_cmd = {'3': cmd_v3, '2c': cmd_v2}
         snmp_cli = available_cmd[conf['snmp_version']]
         scProc = run(snmp_cli.split(' '), capture_output=True)  # query snmp data
-        output = scProc.stdout.decode('utf-8') + '\n' + scProc.stderr.decode('utf-8')
+        output = (scProc.stdout.decode(encoding='utf-8', errors='replace') + '\n' +
+                  scProc.stderr.decode(encoding='utf-8', errors='replace'))
         if scProc.returncode != 0:
             if 'Unknown Object Identifier' in output:
                 print('your MIB may out of dated!')
@@ -445,14 +446,14 @@ class PARSER:
             if self.order is None:
                 if self.hardware[2] == 'PS':
                     p = run(snmp_cli.replace('powerSupplyTable', self.hardware[1][0]).split(' '), capture_output=True)
-                    output += '\n' + p.stdout.decode('utf-8')
+                    output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
                     p = run(snmp_cli.replace('powerSupplyTable', self.hardware[1][1]).split(' '), capture_output=True)
-                    output += '\n' + p.stdout.decode('utf-8')
+                    output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
                 elif self.hardware[2] == 'PU':
                     p = run(snmp_cli.replace('powerUnitTable', self.hardware[1][0]).split(' '), capture_output=True)
-                    output += '\n' + p.stdout.decode('utf-8')
+                    output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
                     p = run(snmp_cli.replace('powerUnitTable', self.hardware[1][1]).split(' '), capture_output=True)
-                    output += '\n' + p.stdout.decode('utf-8')
+                    output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
             return output.split('\n')
 
     def classifier(self, data, tmp):  # classify snmp data to it's specific type
