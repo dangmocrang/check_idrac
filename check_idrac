@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.11
 __author__ = 'Nguyen Duc Trung Dung'
 __contact__ = 'ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com'
 __blog__ = 'dybn.blogspot.com'
@@ -7,10 +7,12 @@ __license__ = 'GPLv3'
 
 import subprocess
 import sys
-import optparse
+import argparse
 import re
 import os
 import configparser
+from configparser import ConfigParser
+
 run = subprocess.run
 reader = configparser.RawConfigParser()
 
@@ -43,30 +45,30 @@ conf = {'snmp_version': None,
         'host': None}
 
 conf_file = {'snmp_version': None,
-        'snmp_community': None,
-        'snmp_security_name': None,
-        'snmp_security_level': None,
-        'snmp_authentication_protocol': None,
-        'snmp_authentication_password': None,
-        'snmp_privacy_protocol': None,
-        'snmp_privacy_password': None,
-        'state_ok': None,
-        'state_warn': None,
-        'state_crit': None,
-        'fan_thresholds': None,
-        'voltage_thresholds': None,
-        'current_thresholds': None,
-        'watt_thresholds': None,
-        'sensor_thresholds': None,
-        'consumption_thresholds': None,
-        'vdisk_thresholds': None,
-        'host_ipaddress': None}
+             'snmp_community': None,
+             'snmp_security_name': None,
+             'snmp_security_level': None,
+             'snmp_authentication_protocol': None,
+             'snmp_authentication_password': None,
+             'snmp_privacy_protocol': None,
+             'snmp_privacy_password': None,
+             'state_ok': None,
+             'state_warn': None,
+             'state_crit': None,
+             'fan_thresholds': None,
+             'voltage_thresholds': None,
+             'current_thresholds': None,
+             'watt_thresholds': None,
+             'sensor_thresholds': None,
+             'consumption_thresholds': None,
+             'vdisk_thresholds': None,
+             'host_ipaddress': None}
 
 all_hardware = {
-    #'DEV': ['SNMP name', 'Description/Additional SNMP name', 'Full name', [value/search pattern]]
-    #Script will first read SNMP name to get snmp data form device, then use value part to search and parse info
+    # 'DEV': ['SNMP name', 'Description/Additional SNMP name', 'Full name', [value/search pattern]]
+    # Script will first read SNMP name to get snmp data form device, then use value part to search and parse info
     'GLOBAL': ['systemStateGlobalSystemStatus', '',
-                'Global', r'systemStateGlobalSystemStatus\.' ],
+               'Global', r'systemStateGlobalSystemStatus\.'],
     'MEM': ['memoryDeviceTable', '1.3.6.1.4.1.674.10892.5.4.1100.50',
             'Memory', r'memoryDeviceIndex\.|'
                       r'memoryDeviceStateSettings\.|'
@@ -85,7 +87,8 @@ all_hardware = {
                  r'powerSupplyRatedInputWattage\.|'
                  r'amperageProbeReading\.|'
                  r'voltageProbeReading\.'],
-    'PU': ['powerUnitTable', ['amperageProbeLocationName', 'amperageProbeReading'],  # PwrUnit, SystemBoard Pwr Consumption
+    'PU': ['powerUnitTable', ['amperageProbeLocationName', 'amperageProbeReading'],
+           # PwrUnit, SystemBoard Pwr Consumption
            'PU', r'powerUnitIndex\.|'
                  r'powerUnitStateSettings\.|'
                  r'powerUnitRedundancyStatus\.|'
@@ -111,7 +114,7 @@ all_hardware = {
                    r'coolingDeviceStatus\.|'
                    r'coolingDeviceReading\.|'
                    r'coolingDeviceLocationName\.'],
-    'BATTERY': ['systemBattery', '',
+    'BATTERY': ['systemBatteryTable', '',
                 'Battery', r'systemBatteryIndex\.|'
                            r'systemBatteryStateSettings\.|'
                            r'systemBatteryStatus\.|'
@@ -159,64 +162,87 @@ def is_number(parameters, x):  # input parameters and how many need to parse
 
 
 def cli_reader():
-    optp = optparse.OptionParser()
-    optp.add_option('-H', '--host', help='IP address', dest='host')
-    optp.add_option('-v', help='specifies SNMP version to use', dest='version', metavar='2c|3')
-    optp.add_option('-u', help='set security name', dest='sec_name', metavar='USER-NAME')
-    optp.add_option('-a', help='set authentication protocol (MD5|SHA)', dest='auth_protocol', metavar='PROTOCOL')
-    optp.add_option('-A', help='set authentication protocol pass phrase', dest='auth_pass', metavar='PASSPHRASE')
-    optp.add_option('-x', help='set privacy protocol (DES|AES)', dest='pri_protocol', metavar='PROTOCOL')
-    optp.add_option('-X', help='set privacy protocol pass phrase', dest='pri_pass', metavar='PASSPHRASE')
-    optp.add_option('-l', help='set security level (noAuthNoPriv|authNoPriv|authPriv)', dest='level', metavar='LEVEL')
-    optp.add_option('-c', help='SNMPv2 community string', dest='community', type='string', metavar='COMMUNITY')
-    optp.add_option('-f', help='configuration file. COMMAND LINE WILL OVERWRITE CONFIGURATION FILE PARAMETERS', dest='cfg', metavar='FILE')
-    optp.add_option('-m', help='specific MIB file. Default is load all MIBs', dest='mib', metavar='FILE')
-    optp.add_option('-n', '--no-alert', help='always return with exit code 0', action='store_true', dest='no_alert')
-    optp.add_option('-w', help='hardware to check. If no hardware specified, all will be listed: DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY', dest='hardware', metavar='FAN|FAN#1|MEM')
-    optp.add_option('-p', help='enable performance data', dest='perf', action='store_true')
-    optp.add_option('-d', help='output debug info. Don\'t use when called by nagios.', dest='debug', action='store_true')
-    optp.add_option('--fan-warn', help='FAN rpm warning thresholds', dest='fan_warn', metavar='MIN,MAX')
-    optp.add_option('--fan-crit', help='FAN rpm critical thresholds', dest='fan_crit', metavar='MIN,MAX')
-    optp.add_option('--temp-warn', help='TEMPERATURE warning thresholds', dest='temp_warn', metavar='MIN,MAX')
-    optp.add_option('--temp-crit', help='TEMPERATURE critical thresholds', dest='temp_crit', metavar='MIN,MAX')
-    optp.add_option('--volt-warn', help='output VOLTAGE warning thresholds', dest='volt_warn', metavar='MIN,MAX')
-    optp.add_option('--volt-crit', help='output VOLTAGE critical thresholds', dest='volt_crit', metavar='MIN,MAX')
-    optp.add_option('--cur-warn', help='output CURRENT warning thresholds', dest='cur_warn', metavar='MIN,MAX')
-    optp.add_option('--cur-crit', help='output CURRENT critical thresholds', dest='cur_crit', metavar='MIN,MAX')
-    optp.add_option('--wat-warn', help='output WATT warning thresholds', dest='wat_warn', metavar='MIN,MAX')
-    optp.add_option('--wat-crit', help='output WATT critical thresholds', dest='wat_crit', metavar='MIN,MAX')
-    optp.add_option('--pwr-alert', help='power consumption', dest='consume', metavar='WARN,CRIT')
-    optp.add_option('--vdisk-bad', help='number of bad block', dest='vdisk', metavar='WARN,CRIT')
-    optp.add_option('--ok', help='ok|online|on|spunup|full|ready|enabled|presence', dest='ok', metavar='STATES')
-    optp.add_option('--warn', help='$ALL$', dest='warn', metavar='STATES')
-    optp.add_option('--crit', help='critical|nonRecoverable|fail', dest='crit', metavar='STATES')
-    optp.add_option('--mem-modules', help='number of installed memory modules', dest='mem_modules', metavar='NUMBER')
-    opts, args = optp.parse_args()
+    args = argparse.ArgumentParser()
+    args.add_argument('-H', '--host', help='IP address', dest='host')
+    args.add_argument('-v', help='specifies SNMP version to use', dest='version', metavar='2c|3')
+    args.add_argument('-u', help='set security name', dest='sec_name', metavar='USER-NAME')
+    args.add_argument('-a', help='set authentication protocol (MD5|SHA)', dest='auth_protocol', metavar='PROTOCOL')
+    args.add_argument('-A', help='set authentication protocol pass phrase', dest='auth_pass', metavar='PASSPHRASE')
+    args.add_argument('-x', help='set privacy protocol (DES|AES)', dest='pri_protocol', metavar='PROTOCOL')
+    args.add_argument('-X', help='set privacy protocol pass phrase', dest='pri_pass', metavar='PASSPHRASE')
+    args.add_argument('-l', help='set security level (noAuthNoPriv|authNoPriv|authPriv)', dest='level', metavar='LEVEL')
+    args.add_argument('-c', help='SNMPv2 community string', dest='community', metavar='COMMUNITY')
+    args.add_argument('-f', help='configuration file. COMMAND LINE WILL OVERWRITE CONFIGURATION FILE PARAMETERS',
+                    dest='cfg', metavar='FILE')
+    args.add_argument('-m', help='specific MIB file. Default is load all MIBs', dest='mib', metavar='FILE')
+    args.add_argument('-n', '--no-alert', help='always return with exit code 0', action='store_true', dest='no_alert')
+    args.add_argument('-w',
+                    help='hardware to check. If no hardware specified, all will be listed: DISK, VDISK, FAN, SENSOR, CPU, PS, PU, MEM, BATTERY',
+                    dest='hardware', metavar='FAN|FAN#1|MEM')
+    args.add_argument('-p', help='enable performance data', dest='perf', action='store_true')
+    args.add_argument('-d', help='output debug info. Don\'t use when called by nagios.', dest='debug',
+                    action='store_true')
+    args.add_argument('--fan-warn', help='FAN rpm warning thresholds', dest='fan_warn', metavar='MIN,MAX')
+    args.add_argument('--fan-crit', help='FAN rpm critical thresholds', dest='fan_crit', metavar='MIN,MAX')
+    args.add_argument('--temp-warn', help='TEMPERATURE warning thresholds', dest='temp_warn', metavar='MIN,MAX')
+    args.add_argument('--temp-crit', help='TEMPERATURE critical thresholds', dest='temp_crit', metavar='MIN,MAX')
+    args.add_argument('--volt-warn', help='output VOLTAGE warning thresholds', dest='volt_warn', metavar='MIN,MAX')
+    args.add_argument('--volt-crit', help='output VOLTAGE critical thresholds', dest='volt_crit', metavar='MIN,MAX')
+    args.add_argument('--cur-warn', help='output CURRENT warning thresholds', dest='cur_warn', metavar='MIN,MAX')
+    args.add_argument('--cur-crit', help='output CURRENT critical thresholds', dest='cur_crit', metavar='MIN,MAX')
+    args.add_argument('--wat-warn', help='output WATT warning thresholds', dest='wat_warn', metavar='MIN,MAX')
+    args.add_argument('--wat-crit', help='output WATT critical thresholds', dest='wat_crit', metavar='MIN,MAX')
+    args.add_argument('--pwr-alert', help='power consumption', dest='consume', metavar='WARN,CRIT')
+    args.add_argument('--vdisk-bad', help='number of bad block', dest='vdisk', metavar='WARN,CRIT')
+    args.add_argument('--ok', help='ok|online|on|spunup|full|ready|enabled|presence', dest='ok', metavar='STATES')
+    args.add_argument('--warn', help='$ALL$', dest='warn', metavar='STATES')
+    args.add_argument('--crit', help='critical|nonRecoverable|fail', dest='crit', metavar='STATES')
+    args.add_argument('--mem-modules', help='number of installed memory modules', dest='mem_modules', metavar='NUMBER')
+    opts = args.parse_args()
     if opts.host is None:
         print('no IP address specified!')
-        optp.print_help()
+        opts.print_help()
         sys.exit(1)
     else:
         conf['host_ipaddress'] = opts.host
-        if opts.version: conf['snmp_version'] = opts.version
-        if opts.community: conf['snmp_community'] = opts.community
-        if opts.sec_name: conf['snmp_security_name'] = opts.sec_name
-        if opts.level: conf['snmp_security_level'] = opts.level
-        if opts.auth_protocol: conf['snmp_authentication_protocol'] = opts.auth_protocol
-        if opts.auth_pass: conf['snmp_authentication_password'] = opts.auth_pass
-        if opts.pri_protocol: conf['snmp_privacy_protocol'] = opts.pri_protocol
-        if opts.pri_pass: conf['snmp_privacy_password'] = opts.pri_pass
-        if opts.hardware: conf['hardware'] = opts.hardware
-        if opts.mib: conf['mib'] = opts.mib
-        else: conf['mib'] = 'ALL'  # if not set, then search all mibs
-        if opts.cfg: conf['file'] = opts.cfg
-        if opts.ok: conf['state_ok'] = opts.ok
-        if opts.warn: conf['state_warn'] = opts.warn
-        if opts.crit: conf['state_crit'] = opts.crit
-        if opts.no_alert is True: conf['alert'] = False
-        if opts.perf is True: conf['perf'] = True
-        if opts.debug is True: conf['debug'] = True
-        if opts.mem_modules: conf['mem_modules'] = opts.mem_modules
+        if opts.version:
+            conf['snmp_version'] = opts.version
+        if opts.community:
+            conf['snmp_community'] = opts.community
+        if opts.sec_name:
+            conf['snmp_security_name'] = opts.sec_name
+        if opts.level:
+            conf['snmp_security_level'] = opts.level
+        if opts.auth_protocol:
+            conf['snmp_authentication_protocol'] = opts.auth_protocol
+        if opts.auth_pass:
+            conf['snmp_authentication_password'] = opts.auth_pass
+        if opts.pri_protocol:
+            conf['snmp_privacy_protocol'] = opts.pri_protocol
+        if opts.pri_pass:
+            conf['snmp_privacy_password'] = opts.pri_pass
+        if opts.hardware:
+            conf['hardware'] = opts.hardware
+        if opts.mib:
+            conf['mib'] = opts.mib
+        else:
+            conf['mib'] = 'ALL'  # if not set, then search all mibs
+        if opts.cfg:
+            conf['file'] = opts.cfg
+        if opts.ok:
+            conf['state_ok'] = opts.ok
+        if opts.warn:
+            conf['state_warn'] = opts.warn
+        if opts.crit:
+            conf['state_crit'] = opts.crit
+        if opts.no_alert is True:
+            conf['alert'] = False
+        if opts.perf is True:
+            conf['perf'] = True
+        if opts.debug is True:
+            conf['debug'] = True
+        if opts.mem_modules:
+            conf['mem_modules'] = opts.mem_modules
         # parse fan threshold
         conf['fan_thresholds'] = []
         for x in [opts.fan_warn, opts.fan_crit]:
@@ -261,14 +287,15 @@ def config_reader():
         else:
             for key in conf_file.keys():
                 try:
-                    conf_file[key] = reader.get(key.split('_')[0], key.split('_',1)[1])
+                    conf_file[key] = reader.get(key.split('_')[0], key.split('_', 1)[1])
                 except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
                     if key in ['fan_thresholds', 'voltage_thresholds', 'current_thresholds', 'watt_thresholds',
                                'sensor_thresholds']:
                         conf_file[key] = ['none', 'none', 'none', 'none']
                     elif key in ['consumption_thresholds', 'vdisk_thresholds']:
                         conf_file[key] = ['none', 'none']
-                    else: continue
+                    else:
+                        continue
                 else:
                     if key in ['fan_thresholds', 'voltage_thresholds', 'current_thresholds', 'watt_thresholds',
                                'sensor_thresholds']:
@@ -290,16 +317,21 @@ def config_verify():  # check if configurations are properly set
     # map cli with configuration file if configuration file is used
     if conf['file'] is not None:
         for threshold in ['fan_thresholds', 'voltage_thresholds', 'current_thresholds', 'watt_thresholds',
-                           'sensor_thresholds', 'consumption_thresholds', 'vdisk_thresholds']:
+                          'sensor_thresholds', 'consumption_thresholds', 'vdisk_thresholds']:
             for i in range(0, len(conf[threshold])):
-                if conf[threshold][i] == 'none': conf[threshold][i] = conf_file[threshold][i]
+                if conf[threshold][i] == 'none':
+                    conf[threshold][i] = conf_file[threshold][i]
         for parameter in ['snmp_version', 'snmp_community', 'snmp_security_name', 'snmp_authentication_protocol',
                           'snmp_authentication_password', 'snmp_privacy_protocol', 'snmp_privacy_password',
                           'snmp_security_level']:
-            if conf[parameter] is None: conf[parameter] = conf_file[parameter]
-        if conf['state_ok'] is None: conf['state_ok'] = conf_file['state_ok']
-        if conf['state_warn'] is None: conf['state_warn'] = conf_file['state_warn']
-        if conf['state_crit'] is None: conf['state_crit'] = conf_file['state_crit']
+            if conf[parameter] is None:
+                conf[parameter] = conf_file[parameter]
+        if conf['state_ok'] is None:
+            conf['state_ok'] = conf_file['state_ok']
+        if conf['state_warn'] is None:
+            conf['state_warn'] = conf_file['state_warn']
+        if conf['state_crit'] is None:
+            conf['state_crit'] = conf_file['state_crit']
     # verify snmp
     if conf['snmp_version'] == '2c' or conf['snmp_version'] == '2C':
         if conf['snmp_community'] is None:
@@ -312,7 +344,8 @@ def config_verify():  # check if configurations are properly set
         if conf['snmp_authentication_protocol'] is None:
             print('authentication_protocol not configured!')
             sys.exit(1)
-        elif conf['snmp_authentication_protocol'].lower() != 'md5' and conf['snmp_authentication_protocol'].lower() != 'sha':
+        elif conf['snmp_authentication_protocol'].lower() != 'md5' and conf[
+            'snmp_authentication_protocol'].lower() != 'sha':
             print('set authentication_protocol to MD5 or SHA')
             sys.exit(1)
         if conf['snmp_authentication_password'] is None:
@@ -330,7 +363,8 @@ def config_verify():  # check if configurations are properly set
         if conf['snmp_security_level'] is None:
             print('security_level not configured!')
             sys.exit(1)
-        elif conf['snmp_security_level'].lower() != 'noauthnopriv' and conf['snmp_security_level'].lower() != 'authnopriv' and conf['snmp_security_level'].lower() != 'authpriv':
+        elif conf['snmp_security_level'].lower() != 'noauthnopriv' and conf[
+            'snmp_security_level'].lower() != 'authnopriv' and conf['snmp_security_level'].lower() != 'authpriv':
             print('set security_level to noAuthNoPriv or authNoPriv or authPriv')
             sys.exit(1)
     else:
@@ -341,9 +375,13 @@ def config_verify():  # check if configurations are properly set
             print('file %s not found!' % conf['mib'])
             sys.exit(1)
     # set default state alert if user forgot to set
-    if conf['state_ok'] is None: conf['state_ok'] = '0|ok|online|on|spunup|full|ready|enabled|presence|NONRAID'
-    if conf['state_warn'] is None: conf['state_warn'] = '$ALL$'
-    if conf['state_crit'] is None: conf['state_crit'] = 'critical|nonRecoverable|fail'
+    if conf['state_ok'] is None:
+        conf['state_ok'] = '0|ok|online|on|spunup|full|ready|enabled|presence|NONRAID|nonraid'
+    if conf['state_warn'] is None:
+        conf['state_warn'] = '$ALL$'
+    if conf['state_crit'] is None:
+        conf['state_crit'] = 'critical|nonRecoverable|fail'
+
     # verify if state alert is overlapped
     conf['state_ok'] = conf['state_ok'].split('|')
     conf['state_warn'] = conf['state_warn'].split('|')
@@ -359,7 +397,7 @@ def config_verify():  # check if configurations are properly set
     conf['state_ok'] = '|'.join(conf['state_ok'])
     conf['state_warn'] = '|'.join(conf['state_warn'])
     conf['state_crit'] = '|'.join(conf['state_crit'])
-                        
+
 
 class PARSER:
     def __init__(self):
@@ -373,7 +411,7 @@ class PARSER:
         self.snmp_command = ''
 
     def get_snmp(self, oids):
-        cmd_v3 = '%s %s -O q -v %s -u %s -l %s -a %s -A %s -x %s -X %s %s -m %s'\
+        cmd_v3 = '%s %s -O q -v %s -u %s -l %s -a %s -A %s -x %s -X %s %s -m %s' \
                  % (self.snmp_command, self.host, conf['snmp_version'], conf['snmp_security_name'],
                     conf['snmp_security_level'],
                     conf['snmp_authentication_protocol'], conf['snmp_authentication_password'],
@@ -386,7 +424,8 @@ class PARSER:
         available_cmd = {'3': cmd_v3, '2c': cmd_v2}
         snmp_cli = available_cmd[conf['snmp_version']]
         scProc = run(snmp_cli.split(' '), capture_output=True)  # query snmp data
-        output=scProc.stdout.decode('utf-8') + '\n' + scProc.stderr.decode('utf-8')
+        output = (scProc.stdout.decode(encoding='utf-8', errors='replace') + '\n' +
+                  scProc.stderr.decode(encoding='utf-8', errors='replace'))
         if scProc.returncode != 0:
             if 'Unknown Object Identifier' in output:
                 print('your MIB may out of dated!')
@@ -397,34 +436,37 @@ class PARSER:
                 print(output)
             sys.exit(1)
         else:
-            if self.debug: print(output)
+            if self.debug:
+                print(output)
             if 'No Such Instance currently exists at this OID' in output:
-                print('hardware not found! If you sure the hw exists then you may want to edit TRANSLATOR code (line 612).')
+                print(
+                    'hardware not found! If you sure the hw exists then you may want to edit TRANSLATOR code.')
                 sys.exit(1)
             # do extra queries for VOLT & CURRENT
             if self.order is None:
                 if self.hardware[2] == 'PS':
                     p = run(snmp_cli.replace('powerSupplyTable', self.hardware[1][0]).split(' '), capture_output=True)
-                    output += '\n' + p.stdout.decode('utf-8')
+                    output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
                     p = run(snmp_cli.replace('powerSupplyTable', self.hardware[1][1]).split(' '), capture_output=True)
-                    output += '\n' + p.stdout.decode('utf-8')
+                    output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
                 elif self.hardware[2] == 'PU':
                     p = run(snmp_cli.replace('powerUnitTable', self.hardware[1][0]).split(' '), capture_output=True)
-                    output += '\n' + p.stdout.decode('utf-8')
+                    output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
                     p = run(snmp_cli.replace('powerUnitTable', self.hardware[1][1]).split(' '), capture_output=True)
-                    output += '\n' + p.stdout.decode('utf-8')
+                    output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
             return output.split('\n')
 
     def classifier(self, data, tmp):  # classify snmp data to it's specific type
         item = re.compile(self.hardware[3])
         for _ in data:
             if item.search(_):
-                if self.debug: print('matched:', _)
+                if self.debug:
+                    print('matched:', _)
                 try:
                     item_order = int(_.split()[0].split('.')[-1])
                     item_info = ' '.join(_.split()[1:])
                 except ValueError as inst:
-                    #print inst
+                    # print inst
                     continue
 
                 if self.hardware[2] == 'PS':
@@ -435,7 +477,7 @@ class PARSER:
                         continue
                     elif 'System Board Pwr Consumption' in _:  # get pwr consumption
                         for x in reversed(data):
-                            if re.search(r'amperageProbeReading.1.%d' %item_order, x):
+                            if re.search(r'amperageProbeReading.1.%d' % item_order, x):
                                 item_info = ' '.join(x.split()[1:])
                                 item_order = 1
                                 break
@@ -462,7 +504,8 @@ class PARSER:
                     continue
                 if type(stat) == int:
                     if conf['state_warn'] == '$ALL$':
-                        if self.debug: print('WARN ALL')
+                        if self.debug:
+                            print('WARN ALL')
                         if re.match(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
                             continue
                         elif re.match(conf['state_crit'], tmp[key][stat], re.IGNORECASE):
@@ -470,30 +513,36 @@ class PARSER:
                             alert = 2
                         else:
                             tmp[key][stat] += '(!)'
-                            if alert != 2: alert = 1
+                            if alert != 2:
+                                alert = 1
                     elif conf['state_crit'] == '$ALL$':
-                        if self.debug: print('CRIT ALL')
+                        if self.debug:
+                            print('CRIT ALL')
                         if re.match(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
                             continue
                         elif re.match(conf['state_warn'], tmp[key][stat], re.IGNORECASE):
                             tmp[key][stat] += '(!)'
-                            if alert != 2: alert = 1
+                            if alert != 2:
+                                alert = 1
                         else:
                             tmp[key][stat] += '(!!)'
                             alert = 2
                     else:
-                        if self.debug: print('NO ALL')
+                        if self.debug:
+                            print('NO ALL')
                         if re.match(conf['state_ok'], tmp[key][stat], re.IGNORECASE):
                             continue
                         elif re.match(conf['state_warn'], tmp[key][stat], re.IGNORECASE):
                             tmp[key][stat] += '(!)'
-                            if alert != 2: alert = 1
+                            if alert != 2:
+                                alert = 1
                         elif re.match(conf['state_crit'], tmp[key][stat], re.IGNORECASE):
                             tmp[key][stat] += '(!!)'
                             alert = 2
                         else:
                             tmp[key][stat] += '(?)'
-                            if alert != 2 and alert != 1: alert = 3
+                            if alert != 2 and alert != 1:
+                                alert = 3
                 else:
                     stat_t = int(stat)
                     if self.hardware[2] == 'Fan':
@@ -508,14 +557,16 @@ class PARSER:
                         if conf['fan_thresholds'][0] != 'none':
                             if int(tmp[key][stat_t].strip('(!)')) <= conf['fan_thresholds'][0]:
                                 tmp[key][stat_t] += '(!)'
-                                if alert != 2: alert = 1
+                                if alert != 2:
+                                    alert = 1
                         if conf['fan_thresholds'][1] != 'none':
                             if int(tmp[key][stat_t].strip('(!)')) >= conf['fan_thresholds'][1]:
                                 tmp[key][stat_t] += '(!)'
-                                if alert != 2: alert = 1
+                                if alert != 2:
+                                    alert = 1
                     elif self.hardware[2] == 'PS':
                         if stat_t == 6:
-                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/1000
+                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)')) / 1000
                             tmp[key][stat_t] = '%.0f' % tmp[key][stat_t]
                             if conf['voltage_thresholds'][3] != 'none':
                                 if float(tmp[key][stat_t].strip('(!)')) >= conf['voltage_thresholds'][3]:
@@ -528,13 +579,15 @@ class PARSER:
                             if conf['voltage_thresholds'][1] != 'none':
                                 if float(tmp[key][stat_t].strip('(!)')) >= conf['voltage_thresholds'][1]:
                                     tmp[key][stat_t] += '(!)'
-                                    if alert != 2: alert = 1
+                                    if alert != 2:
+                                        alert = 1
                             if conf['voltage_thresholds'][0] != 'none':
                                 if float(tmp[key][stat_t].strip('(!)')) <= conf['voltage_thresholds'][0]:
                                     tmp[key][stat_t] += '(!)'
-                                    if alert != 2: alert = 1
+                                    if alert != 2:
+                                        alert = 1
                         elif stat_t == 5:
-                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/10
+                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)')) / 10
                             tmp[key][stat_t] = '%.1f' % tmp[key][stat_t]
                             if conf['current_thresholds'][3] != 'none':
                                 if float(tmp[key][stat_t].strip('(!)')) >= conf['current_thresholds'][3]:
@@ -547,13 +600,15 @@ class PARSER:
                             if conf['current_thresholds'][1] != 'none':
                                 if float(tmp[key][stat_t].strip('(!)')) >= conf['current_thresholds'][1]:
                                     tmp[key][stat_t] += '(!)'
-                                    if alert != 2: alert = 1
+                                    if alert != 2:
+                                        alert = 1
                             if conf['current_thresholds'][0] != 'none':
                                 if float(tmp[key][stat_t].strip('(!)')) <= conf['current_thresholds'][0]:
                                     tmp[key][stat_t] += '(!)'
-                                    if alert != 2: alert = 1
+                                    if alert != 2:
+                                        alert = 1
                         elif stat_t == 2:
-                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/10
+                            tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)')) / 10
                             tmp[key][stat_t] = '%.0f' % tmp[key][stat_t]
                             if conf['watt_thresholds'][3] != 'none':
                                 if float(tmp[key][stat_t].strip('(!)')) >= conf['watt_thresholds'][3]:
@@ -581,10 +636,11 @@ class PARSER:
                         if conf['consumption_thresholds'][0] != 'none':
                             if float(tmp[key][stat_t].strip('(!)')) >= conf['consumption_thresholds'][0]:
                                 tmp[key][stat_t] += '(!)'
-                                if alert != 2: alert = 1
+                                if alert != 2:
+                                    alert = 1
                     elif self.hardware[2] == 'Sensor':
-                        tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)'))/10
-                        tmp[key][stat_t] = '%.1f' %tmp[key][stat_t]
+                        tmp[key][stat_t] = float(tmp[key][stat_t].strip('(!)')) / 10
+                        tmp[key][stat_t] = '%.1f' % tmp[key][stat_t]
                         if conf['sensor_thresholds'][3] != 'none':
                             if float(tmp[key][stat_t].strip('(!)')) >= conf['sensor_thresholds'][3]:
                                 tmp[key][stat_t] += '(!!)'
@@ -596,11 +652,13 @@ class PARSER:
                         if conf['sensor_thresholds'][1] != 'none':
                             if float(tmp[key][stat_t].strip('(!)')) >= conf['sensor_thresholds'][1]:
                                 tmp[key][stat_t] += '(!)'
-                                if alert != 2: alert = 1
+                                if alert != 2:
+                                    alert = 1
                         if conf['sensor_thresholds'][0] != 'none':
                             if float(tmp[key][stat_t].strip('(!)')) <= conf['sensor_thresholds'][0]:
                                 tmp[key][stat_t] += '(!)'
-                                if alert != 2: alert = 1
+                                if alert != 2:
+                                    alert = 1
                     elif self.hardware[2] == 'VDisk':
                         if conf['vdisk_thresholds'][1] != 'none':
                             if int(tmp[key][stat_t].strip('(!)')) >= conf['vdisk_thresholds'][1]:
@@ -622,13 +680,13 @@ class PARSER:
                 if re.search(self.hardware[3].split('|')[0], data, re.IGNORECASE):
                     hw_quantity += 1
             for _ in range(0, hw_quantity):
-                hw_dict[_+1] = []  # prepare slot for number of hw
+                hw_dict[_ + 1] = []  # prepare slot for number of hw
         else:
             hw_dict[self.order] = []
             self.snmp_command = 'snmpget'
             # DISK/VDISK use suffix .1 for first disk#, others use .1.1 for first device
             # If your idrac installed with more hw, write your own translator here
-            #--TRANSLATOR--#
+            # --TRANSLATOR--#
             if self.hardware[2] == 'PDisk' or self.hardware[2] == 'VDisk':
                 oids = self.hardware[3].replace('|', ' ').replace('\.', '.%d' % self.order)
                 snmp_data = self.get_snmp(oids)
@@ -653,17 +711,18 @@ class PARSER:
                         snmp_data = snmp_data + self.get_snmp(oids)
                 else:
                     snmp_data = self.get_snmp(oids)
-            #--END OF TRANSLATOR--#
+            # --END OF TRANSLATOR--#
         if self.debug:
             print('\n'.join(snmp_data))
             print(hw_dict)
         hw_dict = self.classifier(snmp_data, hw_dict)  # classify data
-        if self.debug: print(hw_dict)
-        #--re-format output to suit hw type. Power is the most messed part!
+        if self.debug:
+            print(hw_dict)
+        # --re-format output to suit hw type. Power is the most messed part!
         output = []
         exit_code = [0, 'OK']
         if self.hardware[2] == 'PDisk':
-            value_on_alert = [3,7,9]  # raise alert on these value. Mapped with all_hardware as list order.
+            value_on_alert = [3, 7, 9]  # raise alert on these value. Mapped with all_hardware as list order.
             # int type for status check, string type for range check
             if self.alert is True:
                 hw_dict, exit_code = self.raise_alert(hw_dict, value_on_alert)
@@ -674,7 +733,8 @@ class PARSER:
                     hw[v] = hw[v].upper()
                 if hw[5] == '(N/A)':
                     hw_5 = hw[5]
-                else: hw_5 = round(float(hw[5])/1024, 2)
+                else:
+                    hw_5 = round(float(hw[5]) / 1024, 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[1].split()[-1].replace('"', ''),
                                      hw_5, hw[3], hw[9], hw[6].replace('HotSpare', '').replace('notASpare', 'no'),
                                      hw[2].replace('"', ''), hw[8].upper(), hw[4].replace('"', ''), hw[7]))
@@ -688,8 +748,9 @@ class PARSER:
                     v = int(v)
                     hw[v] = hw[v].upper()
                 if self.perf is True and hw[3].split('(')[0]:
-                    perf_data = ' | FAN%s_RPM=%s;;;%s;%s' % (hw[0], hw[3].split('(')[0], conf['fan_thresholds'][2], conf['fan_thresholds'][3])
-                    perf_data = perf_data.replace('none','')
+                    perf_data = ' | FAN%s_RPM=%s;;;%s;%s' % (
+                    hw[0], hw[3].split('(')[0], conf['fan_thresholds'][2], conf['fan_thresholds'][3])
+                    perf_data = perf_data.replace('none', '')
                 else:
                     perf_data = ''
                 output.append(tmp % (hw[4].replace('"', '').replace(' RPM', ''), hw[3], hw[1], hw[2], perf_data))
@@ -706,8 +767,9 @@ class PARSER:
                     hw[v] = hw[v].upper()
                 if self.perf is True and hw[3] and hw[3] != '(N/A)':
                     perf_data = ' | %s=%s;;;%s;%s' \
-                                % (hw[4].replace('"', ''), hw[3], conf['sensor_thresholds'][2], conf['sensor_thresholds'][3])
-                    perf_data = perf_data.replace('none','')
+                                % (hw[4].replace('"', ''), hw[3], conf['sensor_thresholds'][2],
+                                   conf['sensor_thresholds'][3])
+                    perf_data = perf_data.replace('none', '')
                 else:
                     perf_data = ''
                 if self.alert is True:
@@ -715,7 +777,8 @@ class PARSER:
                 else:
                     if hw[3] == '(N/A)':
                         hw_3 = hw[3]
-                    else: hw_3 = round(float(hw[3])/10, 1)
+                    else:
+                        hw_3 = round(float(hw[3]) / 10, 1)
                     output.append(tmp % (hw[4].replace('"', ''), hw_3, hw[1], hw[2], perf_data))
         elif self.hardware[2] == 'CPU':
             value_on_alert = [1, 2]
@@ -741,7 +804,7 @@ class PARSER:
                     hw[v] = hw[v].upper()
                 if self.perf is True and hw[4].split('(')[0]:
                     perf_data = ' | PwrConsumption=%s;;;;' % (hw[4].split('(')[0])
-                    perf_data = perf_data.replace('none','')
+                    perf_data = perf_data.replace('none', '')
                 else:
                     perf_data = ''
                 output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[2], hw[4], perf_data))
@@ -759,7 +822,8 @@ class PARSER:
                 if self.perf is True:
                     if hw[4] == '(N/A)':
                         hw_4 = hw[4]
-                    else: hw_4 = round(float(hw[4])/10, 0)
+                    else:
+                        hw_4 = round(float(hw[4]) / 10, 0)
                     if not hw[3]:
                         hw[3] = 0
                     if not hw[6].split('(')[0]:
@@ -770,29 +834,34 @@ class PARSER:
                         hw_4 = 0
                     if not hw[2].split('(')[0]:
                         hw[2] = '(0)'
-                    perf_data = ' | VoltINPUT=%s;;;; VoltOUTPUT=%s;;;; Current=%s;;;; WattINPUT=%s;;;; WattOUTPUT=%s;;;;'\
-                                %(hw[3], hw[6].split('(')[0], hw[5].split('(')[0], hw_4, hw[2].split('(')[0])
-                    perf_data = perf_data.replace('none','')
+                    perf_data = ' | VoltINPUT=%s;;;; VoltOUTPUT=%s;;;; Current=%s;;;; WattINPUT=%s;;;; WattOUTPUT=%s;;;;' \
+                                % (hw[3], hw[6].split('(')[0], hw[5].split('(')[0], hw_4, hw[2].split('(')[0])
+                    perf_data = perf_data.replace('none', '')
                 else:
                     perf_data = ''
                 if self.alert is True:
                     if hw[4] == '(N/A)':
                         hw_4 = hw[4]
-                    else: hw_4 = float(hw[4])/10
+                    else:
+                        hw_4 = float(hw[4]) / 10
                     output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw[6], hw[5], hw_4, hw[2], perf_data))
                 else:
                     if hw[4] == '(N/A)':
                         hw_4 = hw[4]
-                    else: hw_4 = float(hw[4])/10
+                    else:
+                        hw_4 = float(hw[4]) / 10
                     if hw[6] == '(N/A)':
                         hw_6 = hw[6]
-                    else: hw_6 = float(hw[6])/1000
+                    else:
+                        hw_6 = float(hw[6]) / 1000
                     if hw[5] == '(N/A)':
                         hw_5 = hw[5]
-                    else: hw_5 = float(hw[5])/10
+                    else:
+                        hw_5 = float(hw[5]) / 10
                     if hw[2] == '(N/A)':
                         hw_2 = hw[2]
-                    else: hw_2 = float(hw[2])/10
+                    else:
+                        hw_2 = float(hw[2]) / 10
                     output.append(tmp % (self.hardware[2], hw[0], hw[1], hw[3], hw_6, hw_5, hw_4, hw_2))
         elif self.hardware[2] == 'Memory':
             value_on_alert = [1, 2]
@@ -806,23 +875,24 @@ class PARSER:
                     hw[v] = hw[v].upper()
                 if hw[5] == '(N/A)':
                     hw_5 = hw[5]
-                else: hw_5 = round(float(hw[5].split()[-1])/(1024*1024), 2)
+                else:
+                    hw_5 = round(float(hw[5].split()[-1]) / (1024 * 1024), 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[4].replace('.', ' ').replace('"', ''),
                                      hw_5, hw[6].split()[-1], hw[1], hw[2], hw[3].replace('deviceTypeIs', ''),
                                      hw[7].replace('"', ''), hw[8].replace('"', ''),))
-            
+
             # Check number of installed memory modules
             if conf['mem_modules'] and int(conf['mem_modules']) != len(hw_dict):
                 detect_diff = int(conf['mem_modules']) - len(hw_dict)
 
                 if detect_diff <= -1:
-                    output.append (self.hardware[2] + ': Number of memory modules not correct!')
+                    output.append(self.hardware[2] + ': Number of memory modules not correct!')
 
                 elif detect_diff == 1:
-                    output.append (self.hardware[2] + ': 1 memory module not detected!!!')
+                    output.append(self.hardware[2] + ': 1 memory module not detected!!!')
 
                 elif detect_diff >= 1:
-                    output.append (self.hardware[2] + ': ' + str(detect_diff) + ' memory modules not detected!!!')
+                    output.append(self.hardware[2] + ': ' + str(detect_diff) + ' memory modules not detected!!!')
 
         elif self.hardware[2] == 'Battery':
             value_on_alert = [1, 2, 3]
@@ -844,7 +914,7 @@ class PARSER:
                 for v in value_on_alert:
                     v = int(v)
                     hw[v] = hw[v].upper()
-                output.append(tmp % (self.hardware[0],hw[0]))
+                output.append(tmp % (self.hardware[0], hw[0]))
         elif self.hardware[2] == 'VDisk':
             value_on_alert = [2, 5, '6']
             if self.alert is True:
@@ -856,7 +926,8 @@ class PARSER:
                     hw[v] = hw[v].upper()
                 if hw[3] == '(N/A)' or hw[3] == '(n/a)':
                     hw_3 = hw[3]
-                else: hw_3 = round(float(hw[3])/1024, 2)
+                else:
+                    hw_3 = round(float(hw[3]) / 1024, 2)
                 output.append(tmp % (self.hardware[2], hw[0], hw[1].replace('"', ''), hw[5], hw[2],
                                      hw[4].replace('r', 'RAID-'), hw_3, hw[6], hw[7].replace('"', '')))
         return output, exit_code
