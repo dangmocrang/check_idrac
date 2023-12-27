@@ -490,7 +490,6 @@ class PARSER:
             if len(self.hardware[3].split('|')) > len(tmp[t]):
                 for r in range(len(tmp[t]), len(self.hardware[3].split('|'))):
                     tmp[t].append('(n/a)')
-        #print(f'classifier tmp: {tmp}')
         return tmp
 
     def raise_alert(self, tmp, value_on_alert):
@@ -669,8 +668,6 @@ class PARSER:
                             if int(tmp[key][stat_t].strip('(!)')) >= conf['vdisk_thresholds'][0]:
                                 tmp[key][stat_t] += '(!!)'
                                 alert = 2
-        #print(f'Rais Alert tmp: {tmp}')
-        #print(f'Rais Alert tmp: {code[alert]}')
         return tmp, code[alert]
 
     def main(self):
