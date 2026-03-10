@@ -201,7 +201,7 @@ def cli_reader():
     opts = args.parse_args()
     if opts.host is None:
         print('no IP address specified!')
-        opts.print_help()
+        args.print_help()
         sys.exit(1)
     else:
         conf['host_ipaddress'] = opts.host
