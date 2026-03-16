@@ -4,7 +4,7 @@ Version 2.2rc4
 
 **Configuration file syntax change since version 2.1**
 
-[CHANGELOG] (./CHANGELOG.md)
+[CHANGELOG](./CHANGELOG.md)
 
 ## Features
 Check idrac 7 hardwares status via SNMP. Currently supports these hardware:
@@ -20,8 +20,8 @@ Check idrac 7 hardwares status via SNMP. Currently supports these hardware:
 - Global
 
 ## Manual
-[MANUAL] (./MANUAL.md)
+[MANUAL](./MANUAL.md)
 
 ## License
 
-[GPLv3] (./LICENSE.md)
+[GPLv3](./LICENSE.md)
