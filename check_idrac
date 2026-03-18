@@ -11,7 +11,7 @@ import argparse
 import re
 import os
 import configparser
-from configparser import ConfigParser
+from configparser import ParsingError, NoSectionError, NoOptionError
 
 run = subprocess.run
 reader = configparser.RawConfigParser()
@@ -280,7 +280,7 @@ def config_reader():
     else:
         try:
             reader.read(filenames=conf['file'])
-        except ConfigParser.ParsingError as err_parsing:
+        except ParsingError as err_parsing:
             print('invalid configuration syntax: %s' % err_parsing.errors)
         except IOError as err_read_file:
             print(err_read_file)
@@ -288,7 +288,7 @@ def config_reader():
             for key in conf_file.keys():
                 try:
                     conf_file[key] = reader.get(key.split('_')[0], key.split('_', 1)[1])
-                except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+                except (NoSectionError, NoOptionError):
                     if key in ['fan_thresholds', 'voltage_thresholds', 'current_thresholds', 'watt_thresholds',
                                'sensor_thresholds']:
                         conf_file[key] = ['none', 'none', 'none', 'none']
