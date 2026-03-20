@@ -688,10 +688,10 @@ class PARSER:
             # If your idrac installed with more hw, write your own translator here
             # --TRANSLATOR--#
             if self.hardware[2] == 'PDisk' or self.hardware[2] == 'VDisk':
-                oids = self.hardware[3].replace('|', ' ').replace('\.', '.%d' % self.order)
+                oids = self.hardware[3].replace('|', ' ').replace(r'\.', '.%d' % self.order)
                 snmp_data = self.get_snmp(oids)
             else:
-                oids = self.hardware[3].replace('|', ' ').replace('\.', '.1.%d' % self.order)
+                oids = self.hardware[3].replace('|', ' ').replace(r'\.', '.1.%d' % self.order)
                 if self.hardware[2] == 'PS':
                     oids = ' '.join(oids.split()[:-1])
                     snmp_data = self.get_snmp(oids)
