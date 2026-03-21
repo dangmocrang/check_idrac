@@ -2,7 +2,7 @@
 __author__ = 'Nguyen Duc Trung Dung'
 __contact__ = 'ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com'
 __blog__ = 'dybn.blogspot.com'
-__version__ = '2.2rc4'
+__version__ = '2.3.0'
 __license__ = 'GPLv3'
 
 import subprocess
@@ -166,9 +166,9 @@ def cli_reader():
     args.add_argument('-H', '--host', help='IP address', dest='host')
     args.add_argument('-v', help='specifies SNMP version to use', dest='version', metavar='2c|3')
     args.add_argument('-u', help='set security name', dest='sec_name', metavar='USER-NAME')
-    args.add_argument('-a', help='set authentication protocol (MD5|SHA)', dest='auth_protocol', metavar='PROTOCOL')
+    args.add_argument('-a', help='set authentication protocol (MD5|SHA|SHA-224|SHA-256|SHA-384|SHA-512)', dest='auth_protocol', metavar='PROTOCOL')
     args.add_argument('-A', help='set authentication protocol pass phrase', dest='auth_pass', metavar='PASSPHRASE')
-    args.add_argument('-x', help='set privacy protocol (DES|AES)', dest='pri_protocol', metavar='PROTOCOL')
+    args.add_argument('-x', help='set privacy protocol (DES|AES|AES-256)', dest='pri_protocol', metavar='PROTOCOL')
     args.add_argument('-X', help='set privacy protocol pass phrase', dest='pri_pass', metavar='PASSPHRASE')
     args.add_argument('-l', help='set security level (noAuthNoPriv|authNoPriv|authPriv)', dest='level', metavar='LEVEL')
     args.add_argument('-c', help='SNMPv2 community string', dest='community', metavar='COMMUNITY')
@@ -344,9 +344,9 @@ def config_verify():  # check if configurations are properly set
         if conf['snmp_authentication_protocol'] is None:
             print('authentication_protocol not configured!')
             sys.exit(1)
-        elif conf['snmp_authentication_protocol'].lower() != 'md5' and conf[
-            'snmp_authentication_protocol'].lower() != 'sha':
-            print('set authentication_protocol to MD5 or SHA')
+        elif conf['snmp_authentication_protocol'].lower() not in (
+                'md5', 'sha', 'sha-224', 'sha-256', 'sha-384', 'sha-512'):
+            print('set authentication_protocol to MD5, SHA, SHA-224, SHA-256, SHA-384 or SHA-512')
             sys.exit(1)
         if conf['snmp_authentication_password'] is None:
             print('authentication_password not configured!')
@@ -354,8 +354,8 @@ def config_verify():  # check if configurations are properly set
         if conf['snmp_privacy_protocol'] is None:
             print('privacy_protocol not configured!')
             sys.exit(1)
-        elif conf['snmp_privacy_protocol'].lower() != 'aes' and conf['snmp_privacy_protocol'].lower() != 'des':
-            print('set privacy_protocol to DES or AES')
+        elif conf['snmp_privacy_protocol'].lower() not in ('des', 'aes', 'aes-256'):
+            print('set privacy_protocol to DES, AES or AES-256')
             sys.exit(1)
         if conf['snmp_privacy_password'] is None:
             print('privacy_password not configured!')

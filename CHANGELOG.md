@@ -1,4 +1,10 @@
 # Change Log
+## [2.3.0]
+- Add SNMPv3 SHA-224, SHA-256, SHA-384, SHA-512 authentication protocol support (iDRAC 10 compatibility)
+- Add AES-256 privacy protocol support
+- Requires net-snmp >= 5.8 on host for SHA-2/AES-256 protocols
+- Backward compatible: MD5, SHA, DES, AES still accepted for iDRAC 7/8/9
+
 ## [2.2rc4]
 - Remove Warn and Crit information in performance data since nagios support only WARN and CRIT but script uses 4 values for this: minWARN, maxWARN, minCRIT and maxCRIT.
 
