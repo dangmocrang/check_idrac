@@ -1,4 +1,4 @@
-# Check_iDRAC version 2.1
+# Check_iDRAC version 2.3.0
 Nguyen Duc Trung Dung (ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com)
 
 website: 
@@ -190,3 +190,21 @@ Why would someone need --no-alert?
 
 - "-n" option will bypass alert function (also not ask for threshold) and always return with exit code = 0. Be carefull
 do not use "-n/--no-alert" options in production environment!!!
+
+## iDRAC 10 Compatibility
+
+Since version 2.3.0, check_idrac supports iDRAC 10 (PowerEdge Gen16/Gen17) SNMPv3 authentication:
+
+- **Authentication protocols**: SHA-384, SHA-512 (in addition to existing MD5, SHA)
+- **Privacy protocols**: AES-256 (in addition to existing DES, AES)
+- **SNMPv2c**: Works with iDRAC 10 without any changes
+
+**Important notes:**
+- iDRAC 10 no longer supports MD5, SHA-1, or DES for SNMPv3. Use SHA-384/SHA-512 for auth and AES/AES-256 for privacy.
+- Requires net-snmp >= 5.8 on the monitoring host for SHA-2/AES-256 support.
+- SNMP OID tree is unchanged from iDRAC 7/8/9 — all hardware checks work as before.
+- Known firmware bug: Power Unit status may report "unknown" on iDRAC 10 firmware 1.20.x. With default state config ($ALL$ = WARN), this shows as WARNING, not CRITICAL.
+
+**Example (iDRAC 10 SNMPv3):**
+
+./check_idrac -H 10.10.10.20 -v 3 -u drac_user -l authPriv -a sha-512 -A authpass -x aes-256 -X privpass -w FAN
