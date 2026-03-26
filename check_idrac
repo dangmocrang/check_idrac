@@ -83,7 +83,7 @@ all_hardware = {
            'PS', r'powerSupplyIndex\.|'
                  r'powerSupplyStatus\.|'
                  r'powerSupplyOutputWatts\.|'
-                 r'powerSupplyInputVoltage\.|'
+                 r'powerSupply(?:Maximum)?InputVoltage\.|'
                  r'powerSupplyRatedInputWattage\.|'
                  r'amperageProbeReading\.|'
                  r'voltageProbeReading\.'],
@@ -457,7 +457,7 @@ class PARSER:
             return output.split('\n')
 
     def classifier(self, data, tmp):  # classify snmp data to it's specific type
-        item = re.compile(self.hardware[3])
+        item = re.compile(self.hardware[3], re.IGNORECASE)
         for _ in data:
             if item.search(_):
                 if self.debug:
@@ -473,9 +473,9 @@ class PARSER:
                     if 'voltageProbeReading' in _:
                         item_order -= 25  # ps volt starting with number 26
                 elif self.hardware[2] == 'PU':
-                    if 'Current' in _:
+                    if re.search(r'Current', _, re.IGNORECASE):
                         continue
-                    elif 'System Board Pwr Consumption' in _:  # get pwr consumption
+                    elif re.search(r'System Board Pwr Consumption', _, re.IGNORECASE):  # get pwr consumption
                         for x in reversed(data):
                             if re.search(r'amperageProbeReading.1.%d' % item_order, x):
                                 item_info = ' '.join(x.split()[1:])
