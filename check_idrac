@@ -670,15 +670,114 @@ class PARSER:
                                 alert = 2
         return tmp, code[alert]
 
+    def _ps_fallback_from_probes(self):
+        """iDRAC 10+ fallback: build PS hw_dict from voltage/amperage probe tables"""
+        self.snmp_command = 'snmpwalk'
+        volt_data = self.get_snmp(oids='voltageProbeTable')
+        amp_data = self.get_snmp(oids='amperageProbeTable')
+        # find PS-related probes by location name
+        ps_volts = {}  # {ps_number: {field: value}}
+        ps_amps = {}
+        for line in volt_data:
+            if re.search(r'voltageProbeLocationName', line, re.IGNORECASE):
+                match = re.search(r'PS(\d+)', line, re.IGNORECASE)
+                if match:
+                    ps_num = int(match.group(1))
+                    idx = int(line.split()[0].split('.')[-1])
+                    ps_volts[ps_num] = {'idx': idx, 'name': ' '.join(line.split()[1:])}
+        for line in amp_data:
+            if re.search(r'amperageProbeLocationName', line, re.IGNORECASE):
+                match = re.search(r'PS(\d+)', line, re.IGNORECASE)
+                if match:
+                    ps_num = int(match.group(1))
+                    idx = int(line.split()[0].split('.')[-1])
+                    ps_amps[ps_num] = {'idx': idx, 'name': ' '.join(line.split()[1:])}
+        # collect readings and status for matched probes
+        for line in volt_data:
+            for ps_num, info in ps_volts.items():
+                if re.search(r'voltageProbeReading\.1\.%d\b' % info['idx'], line, re.IGNORECASE):
+                    info['reading'] = line.split()[-1]
+                if re.search(r'voltageProbeStatus\.1\.%d\b' % info['idx'], line, re.IGNORECASE):
+                    info['status'] = line.split()[-1]
+        for line in amp_data:
+            for ps_num, info in ps_amps.items():
+                if re.search(r'amperageProbeReading\.1\.%d\b' % info['idx'], line, re.IGNORECASE):
+                    info['reading'] = line.split()[-1]
+                if re.search(r'amperageProbeStatus\.1\.%d\b' % info['idx'], line, re.IGNORECASE):
+                    info['status'] = line.split()[-1]
+        # build hw_dict compatible with PS output format:
+        # [0]=index, [1]=status, [2]=outputWatts, [3]=inputVoltage, [4]=ratedWattage, [5]=ampReading, [6]=voltReading
+        hw_dict = {}
+        status_map = {'3': 'OK', '4': 'nonCritical', '5': 'CRITICAL'}
+        for ps_num in sorted(set(list(ps_volts.keys()) + list(ps_amps.keys()))):
+            volt_info = ps_volts.get(ps_num, {})
+            amp_info = ps_amps.get(ps_num, {})
+            status_val = volt_info.get('status', amp_info.get('status', '3'))
+            hw_dict[ps_num] = [
+                str(ps_num),                              # [0] index
+                status_map.get(status_val, status_val),   # [1] status
+                '(n/a)',                                   # [2] output watts — will be .upper() by value_on_alert
+                str(int(int(volt_info.get('reading', '0')) / 1000)),  # [3] input voltage (millivolts→volts)
+                '(N/A)',                                   # [4] rated wattage — NOT in value_on_alert, needs uppercase
+                amp_info.get('reading', '(n/a)'),         # [5] amperage — will be .upper() by value_on_alert
+                '(n/a)',                                   # [6] volt output — will be .upper() by value_on_alert
+            ]
+        return hw_dict
+
+    def _pu_fallback_from_probes(self):
+        """iDRAC 10+ fallback: build PU hw_dict from amperageProbeTable"""
+        self.snmp_command = 'snmpwalk'
+        amp_data = self.get_snmp(oids='amperageProbeTable')
+        # find "System Board Pwr Consumption" probe
+        pwr_idx = None
+        pwr_reading = '(n/a)'
+        pwr_status = '3'
+        for line in amp_data:
+            if re.search(r'amperageProbeLocationName', line, re.IGNORECASE):
+                if re.search(r'System Board Pwr Consumption', line, re.IGNORECASE):
+                    pwr_idx = int(line.split()[0].split('.')[-1])
+        if pwr_idx is not None:
+            for line in amp_data:
+                if re.search(r'amperageProbeReading\.1\.%d\b' % pwr_idx, line, re.IGNORECASE):
+                    pwr_reading = line.split()[-1]
+                if re.search(r'amperageProbeStatus\.1\.%d\b' % pwr_idx, line, re.IGNORECASE):
+                    pwr_status = line.split()[-1]
+        # build hw_dict compatible with PU output format:
+        # [0]=index, [1]=stateSettings, [2]=redundancyStatus, [3]=status, [4]=pwr consumption
+        status_map = {'3': 'OK', '4': 'nonCritical', '5': 'CRITICAL'}
+        hw_dict = {}
+        if pwr_idx is not None:
+            hw_dict[1] = [
+                '1',                                          # [0] index
+                status_map.get(pwr_status, pwr_status),       # [1] state settings
+                '(n/a)',                                       # [2] redundancy (not available)
+                status_map.get(pwr_status, pwr_status),       # [3] status
+                pwr_reading,                                   # [4] pwr consumption reading
+            ]
+        return hw_dict
+
     def main(self):
         hw_dict = {}
         hw_quantity = 0
+        fallback = False
+        snmp_data = []
         if self.order is None:
             self.snmp_command = 'snmpwalk'  # use walk when check group or all
             snmp_data = self.get_snmp(oids=self.hardware[0])
             for data in snmp_data:
                 if re.search(self.hardware[3].split('|')[0], data, re.IGNORECASE):
                     hw_quantity += 1
+            # iDRAC 10+ fallback: PS/PU tables may not exist, use probe tables instead
+            if hw_quantity == 0 and self.hardware[2] == 'PS':
+                hw_dict = self._ps_fallback_from_probes()
+                fallback = bool(hw_dict)
+                if self.debug and fallback:
+                    print('iDRAC 10 fallback: PS from probe tables')
+            elif hw_quantity == 0 and self.hardware[2] == 'PU':
+                hw_dict = self._pu_fallback_from_probes()
+                fallback = bool(hw_dict)
+                if self.debug and fallback:
+                    print('iDRAC 10 fallback: PU from probe tables')
             for _ in range(0, hw_quantity):
                 hw_dict[_ + 1] = []  # prepare slot for number of hw
         else:
@@ -712,10 +811,12 @@ class PARSER:
                 else:
                     snmp_data = self.get_snmp(oids)
             # --END OF TRANSLATOR--#
-        if self.debug:
-            print('\n'.join(snmp_data))
-            print(hw_dict)
-        hw_dict = self.classifier(snmp_data, hw_dict)  # classify data
+        # skip classifier if hw_dict was already built by iDRAC 10+ fallback
+        if not fallback:
+            if self.debug:
+                print('\n'.join(snmp_data))
+                print(hw_dict)
+            hw_dict = self.classifier(snmp_data, hw_dict)  # classify data
         if self.debug:
             print(hw_dict)
         # --re-format output to suit hw type. Power is the most messed part!
