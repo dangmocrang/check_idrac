@@ -383,20 +383,14 @@ def config_verify():  # check if configurations are properly set
         conf['state_crit'] = 'critical|nonRecoverable|fail'
 
     # verify if state alert is overlapped
-    conf['state_ok'] = conf['state_ok'].split('|')
-    conf['state_warn'] = conf['state_warn'].split('|')
-    conf['state_crit'] = conf['state_crit'].split('|')
-    for w in conf['state_warn']:
-        if w in conf['state_ok'] or w in conf['state_crit']:
+    for w in conf['state_warn'].split('|'):
+        if w in conf['state_ok'].split('|') or w in conf['state_crit'].split('|'):
             print('state thresholds overlapped!')
             sys.exit(1)
-    for c in conf['state_crit']:
-        if c in conf['state_ok']:
+    for c in conf['state_crit'].split('|'):
+        if c in conf['state_ok'].split('|'):
             print('state thresholds overlapped!')
             sys.exit(1)
-    conf['state_ok'] = '|'.join(conf['state_ok'])
-    conf['state_warn'] = '|'.join(conf['state_warn'])
-    conf['state_crit'] = '|'.join(conf['state_crit'])
 
 
 class PARSER:
