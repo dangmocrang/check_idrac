@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.11
+#!/usr/bin/env python3
 __author__ = 'Nguyen Duc Trung Dung'
 __contact__ = 'ndtdung@spsvietnam.vn - dung.nguyendt@gmail.com'
 __blog__ = 'dybn.blogspot.com'
@@ -423,7 +423,11 @@ class PARSER:
                     oids, self.mib_file)
         available_cmd = {'3': cmd_v3, '2c': cmd_v2}
         snmp_cli = available_cmd[conf['snmp_version']]
-        scProc = run(snmp_cli.split(' '), capture_output=True)  # query snmp data
+        # Python >= 3.7 provides capture_output=True
+        try:
+            scProc = run(snmp_cli.split(' '), capture_output=True)  # query snmp data
+        except TypeError:
+            scProc = run(snmp_cli.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # query snmp data
         output = (scProc.stdout.decode(encoding='utf-8', errors='replace') + '\n' +
                   scProc.stderr.decode(encoding='utf-8', errors='replace'))
         if scProc.returncode != 0:
@@ -445,14 +449,38 @@ class PARSER:
             # do extra queries for VOLT & CURRENT
             if self.order is None:
                 if self.hardware[2] == 'PS':
-                    p = run(snmp_cli.replace('powerSupplyTable', self.hardware[1][0]).split(' '), capture_output=True)
+                    # Python >= 3.7 provides capture_output=True
+                    try:
+                        p = run(snmp_cli.replace('powerSupplyTable', self.hardware[1][0]).split(' '), \
+                                capture_output=True)
+                    except TypeError:
+                        p = run(snmp_cli.replace('powerSupplyTable', self.hardware[1][0]).split(' '), \
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
-                    p = run(snmp_cli.replace('powerSupplyTable', self.hardware[1][1]).split(' '), capture_output=True)
+                    # Python >= 3.7 provides capture_output=True
+                    try:
+                        p = run(snmp_cli.replace('powerSupplyTable', self.hardware[1][1]).split(' '), \
+                                capture_output=True)
+                    except TypeError:
+                        p = run(snmp_cli.replace('powerSupplyTable', self.hardware[1][1]).split(' '), \
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
                 elif self.hardware[2] == 'PU':
-                    p = run(snmp_cli.replace('powerUnitTable', self.hardware[1][0]).split(' '), capture_output=True)
+                    # Python >= 3.7 provides capture_output=True
+                    try:
+                        p = run(snmp_cli.replace('powerUnitTable', self.hardware[1][0]).split(' '), \
+                                capture_output=True)
+                    except TypeError:
+                        p = run(snmp_cli.replace('powerUnitTable', self.hardware[1][0]).split(' '), \
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
-                    p = run(snmp_cli.replace('powerUnitTable', self.hardware[1][1]).split(' '), capture_output=True)
+                    # Python >= 3.7 provides capture_output=True
+                    try:
+                        p = run(snmp_cli.replace('powerUnitTable', self.hardware[1][1]).split(' '), \
+                                capture_output=True)
+                    except TypeError:
+                        p = run(snmp_cli.replace('powerUnitTable', self.hardware[1][1]).split(' '), \
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     output += '\n' + p.stdout.decode(encoding='utf-8', errors='replace')
             return output.split('\n')
 
