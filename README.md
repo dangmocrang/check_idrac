@@ -8,7 +8,7 @@
 
 ## Overview
 
-`check_idrac` is a lightweight, single-file Python 3.11+ monitoring plugin that remotely checks Dell iDRAC 7–10 hardware status via SNMP. It integrates seamlessly with Nagios/Icinga to monitor:
+`check_idrac` is a lightweight, single-file Python 3.6+ monitoring plugin that remotely checks Dell iDRAC 7–10 hardware status via SNMP. It integrates seamlessly with Nagios/Icinga to monitor:
 
 - **Physical Components**: Memory, CPU, Power Supply, Fan, Battery, Temperature Sensor, Physical Disk
 - **Virtual Components**: Virtual Disk
@@ -363,7 +363,7 @@ check_command check_idrac_conf!FAN,MEM,PS
 
 ## Requirements
 
-- **Python**: 3.11 or higher
+- **Python**: 3.6 or higher
 - **net-snmp**: snmpwalk, snmpget binaries
 - **iDRAC**: Version 7+ (tested on R640, R650 servers)
 - **Network**: SNMP access to iDRAC (UDP port 161)
