@@ -28,19 +28,19 @@ conf = {'snmp_version': None,
         'state_ok': None,
         'state_warn': None,
         'state_crit': None,
-        'hardware': None,
+        'hardware': [],
         'alert': True,
         'mib': None,
         'file': None,
         'perf': False,
         'debug': False,
-        'fan_thresholds': None,
-        'voltage_thresholds': None,
-        'current_thresholds': None,
-        'watt_thresholds': None,
-        'sensor_thresholds': None,
-        'consumption_thresholds': None,
-        'vdisk_thresholds': None,
+        'fan_thresholds': [],
+        'voltage_thresholds': [],
+        'current_thresholds': [],
+        'watt_thresholds': [],
+        'sensor_thresholds': [],
+        'consumption_thresholds': [],
+        'vdisk_thresholds': [],
         'mem_modules': None,
         'host': None}
 
@@ -55,13 +55,13 @@ conf_file = {'snmp_version': None,
              'state_ok': None,
              'state_warn': None,
              'state_crit': None,
-             'fan_thresholds': None,
-             'voltage_thresholds': None,
-             'current_thresholds': None,
-             'watt_thresholds': None,
-             'sensor_thresholds': None,
-             'consumption_thresholds': None,
-             'vdisk_thresholds': None,
+             'fan_thresholds': [],
+             'voltage_thresholds': [],
+             'current_thresholds': [],
+             'watt_thresholds': [],
+             'sensor_thresholds': [],
+             'consumption_thresholds': [],
+             'vdisk_thresholds': [],
              'host_ipaddress': None}
 
 all_hardware = {
@@ -309,7 +309,8 @@ def config_reader():
 def config_verify():  # check if configurations are properly set
     # verify hardware input
     if conf['hardware']:
-        conf['hardware'] = conf['hardware'].split('#')
+        if isinstance(conf['hardware'], str):
+            conf['hardware'] = conf['hardware'].split('#')
         try:
             conf['hardware'][1] = int(conf['hardware'][1])
         except IndexError:
