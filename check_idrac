@@ -377,7 +377,7 @@ def config_verify():  # check if configurations are properly set
             sys.exit(1)
     # set default state alert if user forgot to set
     if conf['state_ok'] is None:
-        conf['state_ok'] = '0|ok|online|on|spunup|full|ready|enabled|presence|NONRAID|nonraid'
+        conf['state_ok'] = '0|ok|online|on|spunup|full|ready|enabled|presence|NONRAID|nonraid|NON-RAID'
     if conf['state_warn'] is None:
         conf['state_warn'] = '$ALL$'
     if conf['state_crit'] is None:
